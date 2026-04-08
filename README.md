@@ -1,199 +1,231 @@
-# 📚 Formazing - App Gestione Formazioni
+# Formazing - Training Management App
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
 
-> Una guida chiara e lineare per gestire formazioni in 3 click, senza stress e senza errori.
+![Personal](https://img.shields.io/badge/Project-Personal-orange)
 
-## 🔑 Cos'è questa app e perché esiste
+A clear and linear guide to managing training sessions in 3 clicks, without stress and without errors.
 
-### Problema che risolve
-*"Devo programmare formazioni per l'associazione, ma ogni volta perdo tempo a creare meeting Teams, inviare email, ricordarmi i codici e gestire i feedback. E se sbaglio a inviare comunicazioni? Panico totale."*
+---
 
-### Soluzione
-Un'app semplice come un pulsante che:
-- ✅ **Non fa nulla da sola** → solo tu decidi quando agire
-- ✅ **Usa Notion come database** (tu inserisci i dati, l'app li trasforma)
-- ✅ **Blocca gli errori** (nessun invio accidentale, nessun link rotto)
+## What is this app and why it exists
 
-**Parola chiave: Controllo totale. Tu comandi, l'app obbedisce.**
+### The problem it solves
 
-## 🧩 Architettura Generale
+"I need to schedule training sessions for the association, but every time I waste time creating Teams meetings, sending emails, remembering codes, and managing feedback. What if I make a mistake in the communications? Total panic."
 
-### 1. Notion = Il tuo foglio Excel condiviso
+### The solution
 
-**Cosa contiene:** Solo i dati grezzi delle formazioni (Nome, Area, Data...)  
-**Cosa NON contiene:** Formule complesse, automazioni, codici calcolati
+An app as simple as a button that:
 
-#### Struttura del database (campi obbligatori):
+* **Does nothing on its own** - only you decide when to act.
+* **Uses Notion as a database** (you enter the data, the app transforms it).
+* **Blocks errors** (no accidental sends, no broken links).
 
-| Campo | Esempio | Note |
-|-------|---------|------|
-| **Nome** | Sicurezza Web | Titolo della formazione |
-| **Area** | IT | Dropdown: IT, R&D, HR, Legale, Commerciale, Marketing, All |
-| **Data/Ora** | 15/03/2024 14:00 | Data/ora confermata |
-| **Periodo** | SPRING | Dropdown: SPRING, AUTUMN, ONCE, EXT, OUT |
-| **Stato** | Programmata | Solo 3 opzioni: Programmata, Calendarizzata, Conclusa |
-| **Codice** | (vuoto) | L'app lo riempie al momento giusto |
-| **Link Teams** | (vuoto) | L'app lo riempie al momento giusto |
+**Keyword: Total Control. You command, the app obeys.**
 
-#### Tipi di Periodo:
-- **SPRING/AUTUMN**: Formazioni periodiche (primavera/autunno)
-- **ONCE**: Formazioni una tantum interne
-- **EXT**: Formazioni ricevute da esterni (altre JE, aziende, professori)
-- **OUT**: Formazioni erogate all'esterno (per altre JE o l'università)
+---
 
-## 🔄 Flusso Operativo Completo
+## General Architecture
 
-### Fase 1: Crei la formazione in Notion *(tu, in tranquillità)*
+### 1. Notion = Your shared Excel sheet
 
-1. Apri il database Notion "Formazioni"
-2. Clicca "Nuova pagina"
-3. Compila solo questi campi:
-   - **Nome** → Sicurezza Web
-   - **Area** → IT
-   - **Data/Ora** → 15/03/2024 14:00
-   - **Periodo** → SPRING
-   - **Stato** → Programmata (obbligatorio!)
-4. Non toccare altri campi (Codice, Link Teams rimangono vuoti)
-5. Salva → la formazione è pronta per l'invio
+**What it contains:** Only the raw data of the training sessions (Name, Area, Date...).
 
-✅ **Perché è sicuro:**
-- Nessun invio automatico
-- Puoi modificare dati finché lo stato è "Programmata"
+**What it DOES NOT contain:** Complex formulas, automations, or calculated codes.
 
-### Fase 2: Invii comunicazioni *(1 click nell'app, con anteprima obbligatoria)*
+#### Database structure (mandatory fields):
 
-1. **Apri l'app Flask** e accedi con la tua password (protezione Basic Auth)
-2. **Vedi SOLO le formazioni** con stato = "Programmata"
-3. **Seleziona la formazione** e clicca "Anteprima comunicazioni"
-4. **Vedi esattamente** cosa verrà inviato e a chi:
+| Field | Example | Notes |
+| --- | --- | --- |
+| **Name** | Web Security | Title of the training |
+| **Area** | IT | Dropdown: IT, R&D, HR, Legal, Commercial, Marketing, All |
+| **Date/Time** | 03/15/2024 14:00 | Confirmed date and time |
+| **Period** | SPRING | Dropdown: SPRING, AUTUMN, ONCE, EXT, OUT |
+| **Status** | Planned | Only 3 options: Planned, Scheduled, Completed |
+| **Code** | (empty) | The app fills this at the right time |
+| **Teams Link** | (empty) | The app fills this at the right time |
 
-#### Esempio di anteprima:
+#### Period Types:
+
+* **SPRING/AUTUMN**: Periodic training sessions (Spring/Autumn).
+* **ONCE**: Internal one-off training sessions.
+* **EXT**: Training received from external sources (other JEs, companies, professors).
+* **OUT**: Training provided externally (for other JEs or the university).
+
+---
+
+## Complete Operational Flow
+
+### Phase 1: Create the training in Notion (you, in peace)
+
+1. Open the "Trainings" Notion database.
+2. Click "New page".
+3. Fill in only these fields:
+* **Name** -> Web Security
+* **Area** -> IT
+* **Date/Time** -> 03/15/2024 14:00
+* **Period** -> SPRING
+* **Status** -> Planned (mandatory!)
+
+
+4. Do not touch other fields (Code, Teams Link remain empty).
+5. Save -> the training is ready to be sent.
+
+**Why it is safe:**
+
+* No automatic sending.
+* You can modify data as long as the status is "Planned".
+
+### Phase 2: Send communications (1 click in the app, with mandatory preview)
+
+1. **Open the Flask app** and log in with your password (Basic Auth protection).
+2. **See ONLY the training sessions** with status = "Planned".
+3. **Select the training** and click "Preview communications".
+4. **See exactly** what will be sent and to whom:
+
+#### Preview example:
+
 ```
-✉️ EMAIL (inviate a: team IT)
-Oggetto: [IT] Formazione "Sicurezza Web" il 15/03 - Codice: IT-Sicurezza_Web-2024-SPRING-01
+EMAIL (sent to: IT team)
+Subject: [IT] "Web Security" Training on 03/15 - Code: IT-Web_Security-2024-SPRING-01
 
-💬 TELEGRAM (gruppo: IT + PRINCIPALE)
-Messaggio: 📅 Nuova formazione per IT!
-Argomento: Sicurezza Web
-Data: 15/03/2024 14:00
+TELEGRAM (group: IT + MAIN)
+Message: New training for IT!
+Topic: Web Security
+Date: 03/15/2024 14:00
+
 ```
 
-5. **Se tutto è OK**, clicca "CONFERMA INVIO"
+5. **If everything is OK**, click "CONFIRM SEND".
 
-L'app fa **4 cose in sequenza:**
-1. Genera il codice → `IT-Sicurezza_Web-2024-SPRING-01`
-2. Crea il meeting Teams → link salvato in Notion
-3. Invia email alle aree coinvolte, includendo il link Teams
-4. Invia messaggi Telegram ai gruppi coinvolti (gruppo area + gruppo principale), incluso il link Teams
-5. Aggiorna lo stato → "Calendarizzata"
+The app performs **5 things in sequence:**
 
-### Fase 3: Invii i feedback *(1 click nell'app, dopo la formazione)*
+1. Generates the code -> `IT-Web_Security-2024-SPRING-01`
+2. Creates the Teams meeting -> link saved in Notion.
+3. Sends emails to the involved areas, including the Teams link.
+4. Sends Telegram messages to the involved groups (area group + main group), including the Teams link.
+5. Updates the status -> "Scheduled".
 
-1. **Apri l'app Flask** → vai in "Formazioni da chiudere"
-2. **Vedi SOLO le formazioni** con stato = "Calendarizzata"
-3. **Clicca "INVIA FEEDBACK"**
+### Phase 3: Send feedback (1 click in the app, after the training)
 
-L'app fa **2 cose:**
-1. Cerca il link precompilato in `feedback_links.csv`
-2. Invia il link via Telegram ai gruppi coinvolti
-3. Aggiorna lo stato → "Conclusa"
+1. **Open the Flask app** -> go to "Trainings to close".
+2. **See ONLY the training sessions** with status = "Scheduled".
+3. **Click "SEND FEEDBACK"**.
 
-## 🚀 Flusso in 3 Passi
+The app performs **3 things:**
 
-1. **In Notion:** Compili i dati base → Stato = "Programmata"
-2. **Nell'app:** Clicchi "Invia comunicazioni" → l'app genera codice, crea Teams, invia email/Telegram dopo anteprima
-3. **Dopo la formazione:** Clicchi "Invia feedback" → l'app manda il link via Telegram e aggiorna stato a "Conclusa"
+1. Searches for the pre-filled link in `feedback_links.csv`.
+2. Sends the link via Telegram to the involved groups.
+3. Updates the status -> "Completed".
 
-**Nessuna complessità nascosta. Nessun rischio. Solo 2 click al mese.**
+---
 
-## 🛡️ Garanzie di Sicurezza
+## 3-Step Flow Summary
 
-| Scenario | Soluzione nell'app | Risultato |
-|----------|-------------------|-----------|
-| "Ho paura di inviare per errore" | Password + anteprima obbligatoria + conferma esplicita | Nessun invio accidentale |
-| "Non voglio gestire codici complessi" | L'app genera il codice al click | Zero errori umani |
-| "Come gestisco i link feedback?" | Script separato genera i link offline | Link sempre pronti |
-| "Un collega potrebbe rovinare tutto" | Basic Auth + nessuna azione automatica | Solo tu puoi inviare |
-| "Voglio sapere le formazioni del giorno" | Bot Telegram con comandi | Info sempre a portata di mano |
+1. **In Notion:** You fill in the basic data -> Status = "Planned".
+2. **In the App:** You click "Send communications" -> the app generates the code, creates Teams, sends email/Telegram after preview.
+3. **After the Training:** You click "Send feedback" -> the app sends the link via Telegram and updates status to "Completed".
 
-## 🧪 Testing e Validazione
+**No hidden complexity. No risk. Only 2 clicks per month.**
 
-Il progetto include un sistema di test completo per garantire affidabilità e sicurezza in produzione.
+---
 
-**Per informazioni complete sui test**: [docs/testing/README.md](docs/testing/README.md)
+## Security Guarantees
 
-## 📚 Documentazione
+| Scenario | App Solution | Result |
+| --- | --- | --- |
+| "I'm afraid of sending by mistake" | Password + mandatory preview + explicit confirmation | No accidental sending |
+| "I don't want to manage complex codes" | The app generates the code on click | Zero human error |
+| "How do I manage feedback links?" | Separate script generates links offline | Links always ready |
+| "A colleague could ruin everything" | Basic Auth + no automatic actions | Only you can send |
+| "I want to know today's sessions" | Telegram bot with commands | Info always at your fingertips |
 
-Per informazioni dettagliate su architettura, API e configurazione:
+---
 
-**Documentazione completa**: [docs/README.md](docs/README.md)
+## Testing and Validation
 
-## 🏗️ Struttura del Progetto
+The project includes a complete testing system to ensure reliability and safety in production.
+
+**For full testing information**: [docs/testing/README.md](https://www.google.com/search?q=docs/testing/README.md)
+
+---
+
+## Documentation
+
+For detailed information on architecture, API, and configuration:
+
+**Full Documentation**: [docs/README.md](https://www.google.com/search?q=docs/README.md)
+
+---
+
+## Project Structure
 
 ```
 Formazing/
 ├── app/
-│   ├── __init__.py           # Inizializza l'app Flask
-│   ├── routes.py             # Dashboard principale e API endpoints
+│   ├── __init__.py           # Initializes the Flask app
+│   ├── routes.py             # Main dashboard and API endpoints
 │   ├── services/
-│   │   ├── notion/             # Servizio Notion (architettura modulare)
-│   │   │   ├── __init__.py       # Facade pattern - API unificata
-│   │   │   ├── notion_client.py  # Core connection e autenticazione
-│   │   │   ├── query_builder.py  # Costruzione query dinamiche
-│   │   │   ├── data_parser.py    # Parsing e mapping dati
-│   │   │   ├── crud_operations.py # Operazioni CRUD database
-│   │   │   └── diagnostics.py    # Monitoring e debugging
-│   │   ├── bot/                # Sistema bot Telegram
-│   │   │   ├── telegram_commands.py  # Handler comandi bot
-│   │   │   └── telegram_formatters.py # Formattazione messaggi
-│   │   ├── mgraph_service.py   # API Microsoft Graph (Teams, Email)
-│   │   ├── telegram_service.py # Orchestratore Telegram
-│   │   └── training_service.py # Orchestratore principale
-│   ├── templates/              # Template web Jinja2
-│   │   ├── layout/               # Layout base e strutture
-│   │   │   ├── base.html           # Template base principale
-│   │   │   └── auth_required.html  # Layout con autenticazione
-│   │   ├── pages/                # Pagine complete
-│   │   ├── organisms/            # Componenti complessi riutilizzabili
-│   │   ├── molecules/            # Componenti medi (form, card, ecc.)
-│   │   ├── atoms/                # Componenti base (button, icon, ecc.)
-│   │   │   ├── badge.html          # Badge di stato
-│   │   │   ├── button.html         # Bottoni
+│   │   ├── notion/               # Notion Service (modular architecture)
+│   │   │   ├── __init__.py       # Facade pattern - Unified API
+│   │   │   ├── notion_client.py  # Core connection and authentication
+│   │   │   ├── query_builder.py  # Dynamic query construction
+│   │   │   ├── data_parser.py    # Data parsing and mapping
+│   │   │   ├── crud_operations.py # Database CRUD operations
+│   │   │   └── diagnostics.py    # Monitoring and debugging
+│   │   ├── bot/                # Telegram bot system
+│   │   │   ├── telegram_commands.py  # Bot command handlers
+│   │   │   └── telegram_formatters.py # Message formatting
+│   │   ├── mgraph_service.py   # Microsoft Graph API (Teams, Email)
+│   │   ├── telegram_service.py # Telegram orchestrator
+│   │   └── training_service.py # Main orchestrator
+│   ├── templates/              # Jinja2 web templates
+│   │   ├── layout/               # Base layouts and structures
+│   │   │   ├── base.html           # Main base template
+│   │   │   └── auth_required.html  # Layout with authentication
+│   │   ├── pages/                # Complete pages
+│   │   ├── organisms/            # Reusable complex components
+│   │   ├── molecules/            # Medium components (forms, cards, etc.)
+│   │   ├── atoms/                # Base components (buttons, icons, etc.)
+│   │   │   ├── badge.html          # Status badges
+│   │   │   ├── button.html         # Buttons
 │   │   │   ├── card.html           # Card containers
-│   │   │   ├── icon.html           # Icone
-│   │   │   └── loading.html        # Indicatori caricamento
-│   │   ├── legacy/               # Template legacy (deprecati)
-│   │   └── error.html            # Pagina errori
-│   └── static/                 # Assets statici
-│       └── style.css             # Fogli di stile CSS
+│   │   │   ├── icon.html           # Icons
+│   │   │   └── loading.html        # Loading indicators
+│   │   ├── legacy/               # Legacy templates (deprecated)
+│   │   └── error.html            # Error page
+│   └── static/                 # Static assets
+│       └── style.css             # CSS stylesheets
 ├── tests/
-│   ├── conftest.py             # Configurazione pytest
-│   ├── fixtures/               # Fixture modulari per test
-│   ├── unit/                   # Unit test componenti
-│   ├── integration/            # Test integrazione reali
-│   ├── e2e/                    # Test end-to-end workflow
-│   ├── config/                 # Configurazioni test
+│   ├── conftest.py             # Pytest configuration
+│   ├── fixtures/               # Modular fixtures for testing
+│   ├── unit/                   # Component unit tests
+│   ├── integration/            # Real integration tests
+│   ├── e2e/                    # End-to-end workflow tests
+│   ├── config/                 # Test configurations
 │   └── mocks/                  # Mock services
 ├── config/
-│   ├── telegram_groups.json    # Mappa Aree → ID Chat Telegram
-│   └── message_templates.yaml  # Template messaggi
+│   ├── telegram_groups.json    # Map Areas -> Telegram Chat IDs
+│   └── message_templates.yaml  # Message templates
 ├── docs/
-│   ├── README.md               # Documentazione generale
-│   ├── bot-telegram.md         # Documentazione bot
-│   ├── notion-service.md       # Documentazione servizio Notion
-│   ├── templates/              # Documentazione sistema template
-│   │   └── README.md             # Guida atomic design e componenti
-│   └── testing/                # Documentazione testing
-│       ├── README.md             # Guida testing generale
-│       ├── fixture-testing-guide.md # Guida completa fixture
-│       └── fixture-quick-reference.md # Reference rapido fixture
-├── quick_test.bat              # Script test Windows
-├── quick_test.sh               # Script test Linux/Mac
-├── .env                        # Variabili ambiente
-├── config.py                   # Configurazioni Flask
-├── requirements.txt            # Dipendenze Python
-└── run.py                      # Entry point applicazione
+│   ├── README.md               # General documentation
+│   ├── bot-telegram.md         # Bot documentation
+│   ├── notion-service.md       # Notion service documentation
+│   ├── templates/              # Template system documentation
+│   │   └── README.md             # Atomic design and components guide
+│   └── testing/                # Testing documentation
+│       ├── README.md             # General testing guide
+│       ├── fixture-testing-guide.md # Complete fixture guide
+│       └── fixture-quick-reference.md # Fixture quick reference
+├── quick_test.bat              # Windows test script
+├── quick_test.sh               # Linux/Mac test script
+├── .env                        # Environment variables
+├── config.py                   # Flask configurations
+├── requirements.txt            # Python dependencies
+└── run.py                      # Application entry point
+
 ```
 
 ---
 
-**Formazing: la gestione delle formazioni non è mai stata così semplice.**
+**Formazing: training management has never been this simple.**
