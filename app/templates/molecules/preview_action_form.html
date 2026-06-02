@@ -1,67 +1,110 @@
 {% macro action_form(action_type, training_id, codice_generato, messages_count) %}
 
-<div class="alert alert-warning border-warning shadow-sm" role="alert">
-    <h5 class="alert-heading">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+<div class="alert bg-bianco-latte text-blu-jemore shadow-sm border-0" role="alert">
+    <h5 class="alert-heading fw-bold">
+        <i class="bi bi-exclamation-triangle-fill me-2 text-blu-jemore"></i>
         Azioni che verranno eseguite
     </h5>
     <hr>
-    <ul class="mb-0">
+    <ul class="mb-0 list-unstyled">
         {% if action_type == 'notification' %}
-            <li>✅ Generazione codice univoco: <code class="text-danger">{{ codice_generato }}</code></li>
-            <li>✅ Creazione evento <strong>Microsoft Teams Calendar</strong></li>
-            <li>✅ Aggiornamento Notion: Stato → {% set text = 'Calendarizzata' %}{% set color = 'bg-info' %}{% include 'atoms/badge.html' %}</li>
-            <li>✅ Invio <strong>email</strong> con allegato Teams</li>
-            <li>✅ Invio messaggi <strong>Telegram</strong> a {{ messages_count }} gruppo{{ 'i' if messages_count != 1 else '' }}</li>
-        {% else %}
-            <li>✅ Invio richiesta feedback <strong>Telegram</strong> a {{ messages_count }} gruppo{{ 'i' if messages_count != 1 else '' }}</li>
-            <li>✅ Aggiornamento Notion: Stato → {% set text = 'Conclusa' %}{% set color = 'bg-success' %}{% include 'atoms/badge.html' %}</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Cambiamento stato su Notion: → {% set text = 'Calendarizzata' %}{% set color = 'badge-calendarizzata' %}{% set size = 'extra-small' %}{% include 'atoms/badge.html' %}</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Generazione codice univoco: <code class="text-danger">{{ codice_generato }}</code></li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Creazione evento su <strong>Microsoft Teams</strong></li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Invio <strong>email</strong> di convocazione con link Teams</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Inserimento codice univoco nel database Notion</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Inserimento del link della formazione nel database Notion</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Invio notifiche <strong>Telegram</strong> ai gruppi (Area + Generale)</li>
+        {% elif action_type == 'feedback' %}
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Invio messaggi <strong>Telegram</strong> con link al form di feedback</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i> Aggiornamento Notion: Stato → {% set text = 'Conclusa' %}{% set color = 'badge-conclusa' %}{% set size = 'extra-small' %}{% include 'atoms/badge.html' %}</li>
         {% endif %}
     </ul>
 </div>
 
-<div class="card border-0 shadow-sm mb-5">
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-6">
-                {% set text = 'Annulla e Torna alla Dashboard' %}
-                {% set variant = 'btn-secondary' %}
-                {% set size = 'btn-lg w-100 d-flex align-items-center justify-content-center' %}
-                {% set icon = 'bi bi-x-circle' %}
-                {% set onclick = "handleCancel()" %}
-                {% include 'atoms/button.html' %}
-            </div>
-            
-            <div class="col-md-6">
-                <form method="POST" 
-                      action="{{ url_for('main.confirm_notification' if action_type == 'notification' else 'main.confirm_feedback', training_id=training_id) }}"
-                      onsubmit="return handleConfirm(event, '{{ action_type }}', {{ messages_count }});"
-                      class="h-100">
-                    {% set text = 'Conferma e Invia' %}
-                    {% set variant = 'btn-success' %}
-                    {% set size = 'btn-lg w-100 h-100 d-flex align-items-center justify-content-center' %}
-                    {% set icon = 'bi bi-check-circle' %}
-                    {% set type = 'submit' %}
-                    {% include 'atoms/button.html' %}
-                </form>
-            </div>
-        </div>
-    </div>
+<div class="d-flex justify-content-center gap-3 mb-5">
+    {% set text = 'Annulla e torna' %}
+    {% set variant = 'btn-jemore-dark-blu' %}
+    {% set size = 'py-2 px-4 d-flex align-items-center justify-content-center' %}
+    {% set icon = 'none' %}
+    {% set onclick = "handleCancel()" %}
+    {% include 'atoms/button.html' %}
+    
+    <form method="POST" 
+          id="confirm-action-form"
+          action="{{ url_for('main.confirm_notification' if action_type == 'notification' else 'main.confirm_feedback', training_id=training_id) }}"
+          onsubmit="return handleConfirm(event, '{{ action_type }}', {{ messages_count }});">
+        <!-- Contenitore per i campi dinamici inniettati via JS -->
+        <div id="hidden-inputs-container"></div>
+        
+        {% set text = 'Conferma e invia' %}
+        {% set variant = 'btn-jemore-giallo' %}
+        {% set size = 'py-2 px-4 d-flex align-items-center justify-content-center' %}
+        {% set icon = 'none' %}
+        {% set type = 'submit' %}
+        {% set onclick = none %}  {# FONDAMENTALE: Resettiamo onclick per non ereditare handleCancel() #}
+        {% include 'atoms/button.html' %}
+    </form>
 </div>
 
 <script>
 function handleCancel() {
-    LoadingOverlay.show('🔙 Ritorno alla Dashboard', 'Annullamento operazione...');
-    window.location.href = "{{ url_for('main.dashboard') }}";
+    // Ora che abbiamo la cache, il ritorno alla dashboard è istantaneo.
+    const targetUrl = "{{ url_for('main.dashboard') }}";
+    const loadingUrl = `/loading?next=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent('Ritorno alla Dashboard')}&message=${encodeURIComponent('Ripristino della panoramica formazioni...')}`;
+    window.location.href = loadingUrl;
 }
 
 function handleConfirm(event, actionType, messagesCount) {
-    // Rimosso il 'confirm' per rendere l'azione immediata.
-    
-    // Mostra loading specifico per l'azione
+    const form = event.target;
+    const submitBtn = event.submitter || document.querySelector('button[type="submit"]');
+    const isBroken = submitBtn && submitBtn.dataset.isBroken === "true";
+
+    // 1. Soft Validation
+    if (isBroken) {
+        const confirmMsg = "Attenzione: alcuni dati vitali di Notion sembrano essere stati rimossi o modificati.\n\nSei sicuro di voler procedere comunque?";
+        if (!window.confirm(confirmMsg)) return false;
+    }
+
+    // 2. RACCOLTA DATI DAI VARI EDITOR (La soluzione al problema!)
+    const hiddenContainer = document.getElementById('hidden-inputs-container');
+    hiddenContainer.innerHTML = ''; // Pulizia preventiva
+
+    // A. Raccogli messaggi Telegram
+    const telegramEditors = document.querySelectorAll('.telegram-editor-js');
+    telegramEditors.forEach(editor => {
+        const index = editor.dataset.index;
+        const groupKey = document.querySelector(`input[name="telegram_group_${index}"]`).value;
+        
+        // Creiamo gli input hidden al volo
+        const inputMsg = document.createElement('input');
+        inputMsg.type = 'hidden';
+        inputMsg.name = `telegram_msg_${index}`;
+        inputMsg.value = editor.value;
+        
+        const inputGroup = document.createElement('input');
+        inputGroup.type = 'hidden';
+        inputGroup.name = `telegram_group_${index}`;
+        inputGroup.value = groupKey;
+        
+        hiddenContainer.appendChild(inputMsg);
+        hiddenContainer.appendChild(inputGroup);
+    });
+
+    // B. Raccogli corpo Email
+    const emailEditor = document.querySelector('.email-editor-js');
+    if (emailEditor) {
+        const inputEmail = document.createElement('input');
+        inputEmail.type = 'hidden';
+        inputEmail.name = 'email_body';
+        inputEmail.value = emailEditor.value;
+        hiddenContainer.appendChild(inputEmail);
+    }
+
+    // 3. UI Feedback
     const titles = {
-        'notification': '📨 Invio Notifiche in Corso',
-        'feedback': '📝 Invio Richiesta Feedback'
+        'notification': 'Invio Notifiche in Corso',
+        'feedback': 'Invio Richiesta Feedback'
     };
     
     const messages = {
@@ -69,9 +112,13 @@ function handleConfirm(event, actionType, messagesCount) {
         'feedback': 'Invio messaggi Telegram e aggiornamento Notion...'
     };
     
+    // Per il submit del form (POST), usiamo l'overlay globale perché non possiamo 
+    // fare un redirect intermedio a una pagina di caricamento mantenendo i dati POST 
+    // in modo semplice senza AJAX. L'overlay qui è corretto perché il browser 
+    // gestisce la transizione POST -> Redirect nativamente.
     LoadingOverlay.show(titles[actionType], messages[actionType]);
     
-    return true; // Permette al form di submitare
+    return true;
 }
 </script>
 

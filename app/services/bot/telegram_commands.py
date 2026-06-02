@@ -55,10 +55,11 @@ class TelegramCommands:
         application.add_handler(CommandHandler("oggi", self.command_oggi))
         application.add_handler(CommandHandler("domani", self.command_domani))
         application.add_handler(CommandHandler("settimana", self.command_settimana))
+        application.add_handler(CommandHandler("prossima_settimana", self.command_prossima_settimana))
         application.add_handler(CommandHandler("help", self.command_help))
         application.add_handler(CommandHandler("start", self.command_help))  # Alias
         
-        logger.info("✅ Command handlers registrati: /oggi, /domani, /settimana, /help, /start")
+        logger.info("Command handlers registrati: /oggi, /domani, /settimana, /prossima_settimana, /help, /start")
     
     # ===============================
     # COMANDI BOT PUBBLICI
@@ -88,72 +89,14 @@ class TelegramCommands:
     async def command_settimana(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Comando /settimana - Mostra tutte le formazioni della settimana (Lun-Dom).
-        
-        FUNZIONALITÀ AVANZATE:
-        - Calcola automaticamente range settimana corrente
-        - Raggruppa formazioni per giorno
-        - Mostra nomi giorni in italiano
-        - Formattazione gerarchica giorno > formazioni
         """
-        if self.notion_service is None:
-            await update.message.reply_text("❌ Servizio non disponibile al momento")
-            return
-        
-        try:
-            # Calcolo range settimana corrente (Lunedì-Domenica)
-            today = datetime.now().date()
-            start_of_week = today - timedelta(days=today.weekday())  # Lunedì = 0
-            end_of_week = start_of_week + timedelta(days=6)  # Domenica
-            
-            # Recupero formazioni nel range settimanale
-            formazioni = await self._get_formazioni_by_date_range(start_of_week, end_of_week)
-            
-            # Header risposta con date range
-            message = f"📅 <b>FORMAZIONI SETTIMANA</b> ({start_of_week.strftime('%d/%m')} - {end_of_week.strftime('%d/%m/%Y')}):\n\n"
-            
-            if not formazioni:
-                message += "🤷‍♂️ <i>Nessuna formazione in programma questa settimana</i>"
-            else:
-                # Raggruppamento formazioni per giorno
-                formazioni_per_giorno = {}
-                for formazione in formazioni:
-                    data_str = self._extract_date_from_formazione(formazione)
-                    if data_str:
-                        if data_str not in formazioni_per_giorno:
-                            formazioni_per_giorno[data_str] = []
-                        formazioni_per_giorno[data_str].append(formazione)
-                
-                # Ordinamento e formattazione per giorno
-                for data in sorted(formazioni_per_giorno.keys()):
-                    day_name = self._get_day_name(data)
-                    message += f"📆 <b>{day_name} {data}</b>:\n"
-                    
-                    # Formazioni del giorno ordinate per ora
-                    for formazione in formazioni_per_giorno[data]:
-                        # Formattazione Area: lista → stringa pulita
-                        area_raw = formazione.get('Area', 'N/A')
-                        if isinstance(area_raw, list) and area_raw:
-                            area = ', '.join(area_raw)
-                        else:
-                            area = area_raw if area_raw else 'N/A'
-                        
-                        nome = formazione.get('Nome', 'N/A')
-                        ora = self._extract_time_from_formazione(formazione)
-                        codice = formazione.get('Codice', '')
-                        link_teams = formazione.get('Link Teams', '')
-                        
-                        message += f"  • <b>{area}</b> - {nome} (<b>{ora}</b>)\n"
-                        if codice:
-                            message += f"    🏷 <code>{codice}</code>\n"
-                        if link_teams:
-                            message += f"    🔗 <a href='{link_teams}'>Link Teams</a>\n"
-                    message += "\n"
-            
-            await update.message.reply_text(message, parse_mode='HTML')
-            
-        except Exception as e:
-            logger.error(f"Errore nel comando /settimana: {e}")
-            await update.message.reply_text("❌ Errore nel recupero delle formazioni della settimana")
+        await self._handle_week_command(update, context, weeks_offset=0, period_name="settimana")
+
+    async def command_prossima_settimana(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        Comando /prossima_settimana - Mostra tutte le formazioni della prossima settimana (Lun-Dom).
+        """
+        await self._handle_week_command(update, context, weeks_offset=1, period_name="prossima settimana")
     
     async def command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -169,6 +112,7 @@ class TelegramCommands:
 📅 <b>/oggi</b> - Mostra le formazioni di oggi
 📅 <b>/domani</b> - Mostra le formazioni di domani  
 📅 <b>/settimana</b> - Mostra tutte le formazioni della settimana
+📅 <b>/prossima_settimana</b> - Mostra le formazioni della prossima settimana
 ❓ <b>/help</b> - Mostra questo messaggio
 
 💡 <i>Tutti i comandi mostrano solo le formazioni già calendarizzate con link Teams attivi!</i>
@@ -244,6 +188,70 @@ class TelegramCommands:
         except Exception as e:
             logger.error(f"Errore nel comando /{period_name}: {e}")
             await update.message.reply_text(f"❌ Errore nel recupero delle formazioni di {period_name}")
+            
+    async def _handle_week_command(self, update, context, weeks_offset: int, period_name: str):
+        """
+        Gestisce logica comune per comandi settimanali (/settimana, /prossima_settimana).
+        """
+        if self.notion_service is None:
+            await update.message.reply_text("❌ Servizio non disponibile al momento")
+            return
+        
+        try:
+            # Calcolo range settimana
+            today = datetime.now().date()
+            start_of_week = today - timedelta(days=today.weekday()) + timedelta(days=7 * weeks_offset)
+            end_of_week = start_of_week + timedelta(days=6)
+            
+            # Recupero formazioni nel range settimanale
+            formazioni = await self._get_formazioni_by_date_range(start_of_week, end_of_week)
+            
+            # Header risposta con date range
+            message = f"📅 <b>FORMAZIONI {period_name.upper()}</b> ({start_of_week.strftime('%d/%m')} - {end_of_week.strftime('%d/%m/%Y')}):\n\n"
+            
+            if not formazioni:
+                message += f"🤷‍♂️ <i>Nessuna formazione in programma la {period_name}</i>"
+            else:
+                # Raggruppamento formazioni per giorno
+                formazioni_per_giorno = {}
+                for formazione in formazioni:
+                    data_str = self._extract_date_from_formazione(formazione)
+                    if data_str:
+                        if data_str not in formazioni_per_giorno:
+                            formazioni_per_giorno[data_str] = []
+                        formazioni_per_giorno[data_str].append(formazione)
+                
+                # Ordinamento e formattazione per giorno
+                for data in sorted(formazioni_per_giorno.keys()):
+                    day_name = self._get_day_name(data)
+                    message += f"📆 <b>{day_name} {data}</b>:\n"
+                    
+                    # Formazioni del giorno ordinate per ora
+                    for formazione in formazioni_per_giorno[data]:
+                        # Formattazione Area: lista → stringa pulita
+                        area_raw = formazione.get('Area', 'N/A')
+                        if isinstance(area_raw, list) and area_raw:
+                            area = ', '.join(area_raw)
+                        else:
+                            area = area_raw if area_raw else 'N/A'
+                        
+                        nome = formazione.get('Nome', 'N/A')
+                        ora = self._extract_time_from_formazione(formazione)
+                        codice = formazione.get('Codice', '')
+                        link_teams = formazione.get('Link Teams', '')
+                        
+                        message += f"  • <b>{area}</b> - {nome} (<b>{ora}</b>)\n"
+                        if codice:
+                            message += f"    🏷 <code>{codice}</code>\n"
+                        if link_teams:
+                            message += f"    🔗 <a href='{link_teams}'>Link Teams</a>\n"
+                    message += "\n"
+            
+            await update.message.reply_text(message, parse_mode='HTML')
+            
+        except Exception as e:
+            logger.error(f"Errore nel comando per {period_name}: {e}")
+            await update.message.reply_text(f"❌ Errore nel recupero delle formazioni della {period_name}")
     
     # ===============================
     # UTILITY RECUPERO DATI

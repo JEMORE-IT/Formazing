@@ -49,9 +49,9 @@ class NotionClient:
         # Inizializzazione client Notion
         try:
             self.client = Client(auth=self.token)
-            logger.info("NotionClient inizializzato | Database ID: ...%s", self.database_id[-8:] if len(self.database_id) > 8 else self.database_id)
+            logger.debug("NotionClient inizializzato | Database ID: ...%s", self.database_id[-8:] if len(self.database_id) > 8 else self.database_id)
         except Exception as e:
-            logger.error(f"❌ Errore inizializzazione NotionClient | Error: {e}")
+            logger.error(f"Errore inizializzazione NotionClient | Error: {e}")
             raise
         
         # Cache per ottimizzazioni

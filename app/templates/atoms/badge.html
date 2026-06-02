@@ -1,5 +1,6 @@
 <!-- ⚛️ ATOM: Badge universale -->
-<span class="badge {{ color|default('bg-secondary') }}">
+{% set is_jemore = color and color.startswith('badge-') %}
+<span class="{{ 'badge-jemore' if is_jemore else 'badge' }} {{ color|default('bg-secondary') }} {{ size|default('') }}">
     {% if icon %}<i class="{{ icon }} me-1"></i>{% endif %}
     {{ text|default('Badge') }}
 </span>

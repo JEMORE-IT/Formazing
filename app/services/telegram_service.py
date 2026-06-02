@@ -67,7 +67,7 @@ class TelegramService:
             templates_config_path (str): Path message_templates.yaml
         """
         self.token = token
-        self.notion_service = notion_service  # ✅ Dipendenza esplicita e obbligatoria
+        self.notion_service = notion_service  # Dipendenza esplicita e obbligatoria
         
         # Carica configurazioni
         if groups_config_path is None:
@@ -84,7 +84,7 @@ class TelegramService:
         # ✅ NotionService configurato subito nei comandi (no setter separato)
         self.commands.notion_service = notion_service
         
-        logger.info(f"✅ TelegramService inizializzato | Gruppi configurati: {len(self.groups)} | NotionService: OK")
+        logger.debug(f"TelegramService inizializzato | Gruppi configurati: {len(self.groups)} | NotionService: OK")
     
     # ===============================
     # CONFIGURAZIONE
@@ -98,13 +98,13 @@ class TelegramService:
                 # Rimuovi commenti se presenti
                 if '_comment' in config:
                     del config['_comment']
-                logger.info(f"📋 Configurazione gruppi Telegram caricata | Gruppi: {len(config)}")
+                logger.info(f"Configurazione gruppi Telegram caricata | Gruppi: {len(config)}")
                 return config
         except FileNotFoundError:
-            logger.warning(f"⚠️ File configurazione gruppi non trovato: {config_path}")
+            logger.warning(f"File configurazione gruppi non trovato: {config_path}")
             return {}
         except json.JSONDecodeError as e:
-            logger.error(f"❌ Errore parsing configurazione gruppi: {e}")
+            logger.error(f"Errore parsing configurazione gruppi: {e}")
             return {}
     
     def _load_message_templates(self, templates_path: str) -> Dict:
@@ -112,18 +112,18 @@ class TelegramService:
         try:
             with open(templates_path, 'r', encoding='utf-8') as f:
                 templates = yaml.safe_load(f)
-                logger.info(f"📝 Template messaggi YAML caricati | Path: {templates_path}")
+                logger.info(f"Template messaggi YAML caricati | Path: {templates_path}")
                 return templates
         except FileNotFoundError:
-            logger.warning(f"⚠️ File template non trovato, uso fallback | Path: {templates_path}")
+            logger.warning(f"File template non trovato, uso fallback | Path: {templates_path}")
             return self._get_fallback_templates()
         except yaml.YAMLError as e:
-            logger.error(f"❌ Errore parsing template YAML: {e}")
+            logger.error(f"Errore parsing template YAML: {e}")
             return self._get_fallback_templates()
     
     def _get_fallback_templates(self) -> Dict:
         """Template di fallback se il file YAML non è disponibile."""
-        logger.info("🔄 Utilizzo template fallback incorporati (hardcoded)")
+        logger.info("Utilizzo template fallback incorporati (hardcoded)")
         return {
             'training_notification': {
                 'telegram': {
@@ -202,7 +202,7 @@ class TelegramService:
         
         # Formazioni OUT non ricevono comunicazioni
         if periodo == 'OUT':
-            logger.info(f"🚫 Formazione OUT (esterna) - nessun targeting | Area: {areas}")
+            logger.info(f"Formazione OUT (esterna) - nessun targeting | Area: {areas}")
             return []
         
         # Il gruppo principale riceve sempre le comunicazioni (tranne OUT)
@@ -215,7 +215,7 @@ class TelegramService:
             for area_name in ['IT', 'R&D', 'HR', 'Legale', 'Commerciale', 'Marketing']:
                 if area_name in self.groups:
                     target_groups.append(area_name)
-            logger.info(f"🌐 Targeting 'All' | Gruppi: {len(target_groups)} (main + {len(target_groups)-1} aree)")
+            logger.info(f"Targeting 'All' | Gruppi: {len(target_groups)} (main + {len(target_groups)-1} aree)")
         else:
             # Formazione per aree specifiche: aggiungi ogni area presente
             configured_areas = [area for area in areas if area in self.groups]
@@ -225,7 +225,7 @@ class TelegramService:
                 target_groups.append(area)
             
             if not_configured:
-                logger.warning(f"⚠️ Aree non configurate in telegram_groups.json: {', '.join(not_configured)}")
+                logger.warning(f"Aree non configurate in telegram_groups.json: {', '.join(not_configured)}")
             
             if configured_areas:
                 logger.info(f"🎯 Targeting aree specifiche | Gruppi: {len(target_groups)} "
@@ -256,7 +256,7 @@ class TelegramService:
             bool: True se messaggio inviato con successo, False in caso di errore
         """
         if group_key not in self.groups:
-            logger.error(f"❌ Gruppo '{group_key}' non configurato in telegram_groups.json")
+            logger.error(f"Gruppo '{group_key}' non configurato in telegram_groups.json")
             return False
 
         group_config = self.groups[group_key]
@@ -270,7 +270,7 @@ class TelegramService:
             topic_id = None
 
         if not chat_id:
-            logger.error(f"❌ chat_id mancante per gruppo '{group_key}'")
+            logger.error(f"chat_id mancante per gruppo '{group_key}'")
             return False
 
         try:
@@ -287,19 +287,19 @@ class TelegramService:
                 await bot.send_message(**kwargs)
             
             topic_info = f", topic: {topic_id}" if topic_id else ""
-            logger.info(f"📤 Messaggio inviato | Gruppo: {group_key} | Chat: {chat_id}{topic_info}")
+            logger.info(f"Messaggio inviato | Gruppo: {group_key} | Chat: {chat_id}{topic_info}")
             
             return True
             
         except telegram.error.TelegramError as e:
-            logger.error(f"❌ TelegramError invio messaggio | Gruppo: {group_key} | Error: {e}")
+            logger.error(f"TelegramError invio messaggio | Gruppo: {group_key} | Error: {e}")
             return False
         except Exception as e:
-            logger.error(f"❌ Errore imprevisto invio messaggio | Gruppo: {group_key} | Error: {e}", exc_info=True)
+            logger.error(f"Errore imprevisto invio messaggio | Gruppo: {group_key} | Error: {e}", exc_info=True)
             return False
     
     
-    async def send_training_notification(self, training_data: Dict) -> Dict[str, bool]:
+    async def send_training_notification(self, training_data: Dict, custom_messages: Dict[str, str] = None) -> Dict[str, bool]:
         """
         Invia notifica di nuova formazione ai gruppi appropriati usando template YAML.
         
@@ -333,24 +333,33 @@ class TelegramService:
         
         # Se nessun gruppo target (es. formazioni OUT), ritorna risultato vuoto
         if not target_groups:
-            logger.info(f"⏭️ Nessun gruppo target per notifica | Formazione: {training_data.get('Nome', 'N/A')}")
+            logger.info(f"Nessun gruppo target per notifica | Formazione: {training_data.get('Nome', 'N/A')}")
             return results
         
-        # Invia messaggio formattato a ogni gruppo target
-        logger.info(f"📣 Invio notifica formazione | Target: {len(target_groups)} gruppi | "
-                   f"Formazione: {training_data.get('Nome', 'N/A')}")
-        
+        # Invia messaggio a ogni gruppo target
         for group_key in target_groups:
-            message = self.formatter.format_training_message(training_data, group_key)
+            # Usa il messaggio personalizzato se fornito, altrimenti usa il formatter (template)
+            if custom_messages and group_key in custom_messages:
+                message = custom_messages[group_key]
+                logger.debug(f"Uso messaggio personalizzato per gruppo: {group_key}")
+            else:
+                message = self.formatter.format_training_message(training_data, group_key)
+            
+            # Se il messaggio è vuoto (l'utente ha cancellato tutto), saltiamo l'invio
+            if not message or not message.strip():
+                logger.info(f"Messaggio vuoto per {group_key}, invio saltato.")
+                results[group_key] = True # Consideriamolo un successo (intenzione dell'utente)
+                continue
+            
             success = await self.send_message_to_group(group_key, message)
             results[group_key] = success
         
         successful = sum(1 for s in results.values() if s)
-        logger.info(f"✅ Notifica formazione completata | Successo: {successful}/{len(results)} | "
+        logger.info(f"Notifica formazione completata | Successo: {successful}/{len(results)} | "
                    f"Gruppi: {', '.join(results.keys())}")
         return results
     
-    async def send_feedback_notification(self, training_data: Dict, feedback_link: str) -> Dict[str, bool]:
+    async def send_feedback_notification(self, training_data: Dict, feedback_link: str, custom_messages: Dict[str, str] = None) -> Dict[str, bool]:
         """
         Invia richiesta feedback post-formazione ai gruppi area (NO main_group).
         
@@ -392,20 +401,26 @@ class TelegramService:
         target_groups = [group for group in all_target_groups if group != 'main_group' and group != 'In_prova']
         
         if not target_groups:
-            logger.info(f"⏭️ Nessun gruppo area per feedback | Formazione: {training_data.get('Nome', 'N/A')}")
+            logger.info(f"Nessun gruppo area per feedback | Formazione: {training_data.get('Nome', 'N/A')}")
             return results
         
         # Invia richiesta feedback a ogni gruppo area
-        logger.info(f"📝 Invio richiesta feedback | Target: {len(target_groups)} gruppi area | "
+        logger.info(f"Invio richiesta feedback | Target: {len(target_groups)} gruppi area | "
                    f"Formazione: {training_data.get('Nome', 'N/A')}")
         
         for group_key in target_groups:
-            message = self.formatter.format_feedback_message(training_data, feedback_link, group_key)
+            # Usa il messaggio personalizzato se fornito
+            if custom_messages and group_key in custom_messages:
+                message = custom_messages[group_key]
+                logger.debug(f"Uso messaggio feedback personalizzato per gruppo: {group_key}")
+            else:
+                message = self.formatter.format_feedback_message(training_data, feedback_link, group_key)
+            
             success = await self.send_message_to_group(group_key, message)
             results[group_key] = success
         
         successful = sum(1 for s in results.values() if s)
-        logger.info(f"✅ Richiesta feedback completata | Successo: {successful}/{len(results)} | "
+        logger.info(f"Richiesta feedback completata | Successo: {successful}/{len(results)} | "
                    f"Gruppi: {', '.join(results.keys())}")
         return results
     
@@ -444,20 +459,20 @@ class TelegramService:
             
             # Registra i comandi sull'istanza dell'applicazione
             self.commands.register_handlers(application)
-            logger.info("✅ Comandi bot configurati per il processo di polling.")
+            logger.info("Comandi bot configurati per il processo di polling.")
 
             try:
-                logger.info("🚀 Avvio del bot Telegram in modalità polling...")
+                logger.info("Avvio del bot Telegram in modalit polling...")
                 await application.initialize()
                 await application.start()
                 await application.updater.start_polling()
-                logger.info("✅ Bot Telegram avviato con successo e in ascolto comandi.")
+                logger.info("Bot Telegram avviato con successo e in ascolto comandi.")
                 
                 # Mantieni il processo in vita
                 await asyncio.Event().wait()
 
             except (KeyboardInterrupt, SystemExit):
-                logger.info("🛑 Interruzione ricevuta, avvio spegnimento pulito del bot...")
+                logger.info("Interruzione ricevuta, avvio spegnimento pulito del bot...")
             
             finally:
                 if application.updater and application.updater.is_running:
@@ -465,7 +480,7 @@ class TelegramService:
                 if application.running:
                     await application.stop()
                 await application.shutdown()
-                logger.info("✅ Bot Telegram fermato con successo.")
+                logger.info("Bot Telegram fermato con successo.")
         
         try:
             asyncio.run(main())
@@ -546,10 +561,10 @@ async def test_telegram_connection(service: TelegramService) -> bool:
     """
     try:
         bot_info = await service.bot.get_me()
-        logger.info(f"✅ Bot Telegram connesso: @{bot_info.username} ({bot_info.first_name})")
+        logger.info(f"Bot Telegram connesso: @{bot_info.username} ({bot_info.first_name})")
         return True
     except Exception as e:
-        logger.error(f"❌ Errore nella connessione al bot Telegram: {e}")
+        logger.error(f"Errore nella connessione al bot Telegram: {e}")
         return False
 
 
@@ -634,44 +649,44 @@ if __name__ == "__main__":
         try:
             # Creazione servizio da configurazione
             service = create_telegram_service_from_config(config)
-            logger.info(f"✅ TelegramService creato con {len(service.groups)} gruppi")
+            logger.info(f"TelegramService creato con {len(service.groups)} gruppi")
             
         except ValueError as e:
-            logger.error(f"❌ Errore configurazione: {e}")
+            logger.error(f"Errore configurazione: {e}")
             return
         
         # Test connessione al bot
         if not await test_telegram_connection(service):
-            logger.error("❌ Impossibile connettersi al bot Telegram")
+            logger.error("Impossibile connettersi al bot Telegram")
             return
         
         # Validazione configurazione gruppi
         errors = validate_groups_config(service.groups)
         if errors:
-            logger.warning("⚠️ Errori nella configurazione gruppi:")
+            logger.warning("Errori nella configurazione gruppi:")
             for error in errors:
-                logger.warning(f"  - {error}")
+                logger.warning(f"- {error}")
         else:
-            logger.info("✅ Configurazione gruppi valida")
+            logger.info("Configurazione gruppi valida")
         
         # Esempio di invio messaggio di test (DECOMMENTARE PER TESTARE)
         # ATTENZIONE: Invia messaggio reale ai gruppi configurati!
         """
         test_message = "🤖 <b>Test Bot Formazing</b>\n\n✅ <i>Il bot funziona correttamente!</i>"
         success = await service.send_message_to_group('main_group', test_message)
-        logger.info(f"Invio messaggio test: {'✅ Successo' if success else '❌ Fallito'}")
+        logger.info(f"Invio messaggio test: {' Successo' if success else ' Fallito'}")
         """
         
         # Avvio bot per comandi interattivi (DECOMMENTARE PER TESTARE)
         # ATTENZIONE: Bot resta attivo e risponde a comandi!
         """
-        logger.info("🚀 Avvio bot per comandi interattivi...")
-        logger.info("💡 Prova i comandi: /oggi, /domani, /settimana, /help")
-        logger.info("⏹️ Premi CTRL+C per fermare il bot")
+        logger.info("Avvio bot per comandi interattivi...")
+        logger.info("Prova i comandi: /oggi, /domani, /settimana, /help")
+        logger.info("Premi CTRL+C per fermare il bot")
         await service.start_bot()
         """
         
-        logger.info("✅ Demo completata con successo")
+        logger.info("Demo completata con successo")
     
     # Esecuzione demo
     asyncio.run(main())

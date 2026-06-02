@@ -8,6 +8,6 @@
         {% if data_bs_target %}data-bs-target="{{ data_bs_target }}"{% endif %}
         {% if data_bs_dismiss %}data-bs-dismiss="{{ data_bs_dismiss }}"{% endif %}
         {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}>
-    {% if icon %}<i class="{{ icon }} me-1"></i>{% endif %}
+    {% if icon and icon != 'none' %}<i class="{{ icon }} me-1"></i>{% endif %}
     {{ text|default('') }}
 </button>

@@ -6,6 +6,7 @@
 
 ### 🏗️ Architettura del Sistema
 - [**🤖 Bot Telegram**](bot-telegram.md) - Sistema bot, comandi, formattazione messaggi
+- [**📊 Analytics & Reporting**](analytics-service.md) - Business Intelligence, grafici e medie accademiche
 - [**🔗 Servizio Notion**](notion-service.md) - Architettura modulare per integrazione Notion API
 - [**🔷 Servizio Microsoft**](microsoft-service.md) - Integrazione Microsoft Graph API, Teams e calendario
 - [**🧪 Testing & Quality**](testing/) - Sistema di test completo, fixture e validazione qualità
@@ -26,12 +27,17 @@ Formazing è un sistema automatizzato che:
 3. **Invia** notifiche automatiche via Telegram ai gruppi appropriati
 4. **Calendarizza** eventi e invia email tramite Microsoft Graph API
 5. **Gestisce** comandi interattivi per consultazioni manuali
+6. **Analizza** l'andamento storico e strategico tramite una dashboard di Analytics dedicata
 
 ---
 
 ## 🏗️ Architettura High-Level
 
 ```mermaid
+---
+config:
+  layout: "elk"
+---
 graph TB
     %% Database e API esterne
     NotionDB[(Notion Database<br/>Formazioni)]
@@ -43,6 +49,7 @@ graph TB
     NotionService[NotionService<br/>5 moduli]
     MicrosoftService[MicrosoftService<br/>3 moduli]
     TelegramService[TelegramService<br/>Bot + Commands]
+    AnalyticsService[AnalyticsService<br/>Motore BI]
     
     %% Configurazioni
     Config[Configurazioni<br/>YAML + JSON]
@@ -53,6 +60,7 @@ graph TB
     NotionService --> Flask
     Flask --> TelegramService
     Flask --> MicrosoftService
+    Flask --> AnalyticsService
     TelegramService --> TelegramAPI
     MicrosoftService --> MSGraph
     
@@ -67,20 +75,21 @@ graph TB
     classDef config fill:#fff3e0
     
     class NotionDB,MSGraph,TelegramAPI external
-    class Flask,NotionService,TelegramService core
+    class Flask,NotionService,TelegramService,AnalyticsService core
     class Config,Templates config
 ```
 
 **Componenti Principali:**
 - **🔵 Servizi Esterni**: Notion (database), Microsoft Graph (email/Teams), Telegram Bot API
-- **🟣 Core Backend**: Flask (orchestratore), NotionService (5 moduli), MicrosoftService (3 moduli), TelegramService (bot + comandi)  
+- **🟣 Core Backend**: Flask (orchestratore), NotionService (5 moduli), MicrosoftService (3 moduli), TelegramService (bot + comandi), AnalyticsService (elaborazione dati)
 - **🟠 Configurazione & UI**: File YAML/JSON (gruppi + template messaggi), Jinja Templates (web UI)
 
 **Flusso Dati:**
 1. **NotionService** recupera formazioni dal database Notion
 2. **Flask** orchestra il workflow e gestisce la web UI con Jinja
-3. **MicrosoftService** crea eventi Teams e invia email via Graph API
-4. **TelegramService** formatta e invia notifiche usando configurazioni YAML/JSON
+3. **AnalyticsService** elabora i dati per generare statistiche e grafici strategici
+4. **MicrosoftService** crea eventi Teams e invia email via Graph API
+5. **TelegramService** formatta e invia notifiche usando configurazioni YAML/JSON
 
 ## 📊 Stack Tecnologico
 

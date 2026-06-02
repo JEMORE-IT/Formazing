@@ -1,4 +1,4 @@
-﻿{% extends "layout/base.html" %}
+{% extends "layout/base.html" %}
 
 {% from "molecules/preview_training_info.html" import training_info_card %}
 {% from "molecules/preview_telegram_messages.html" import telegram_messages_card %}
@@ -10,47 +10,48 @@
 {% block content %}
 <div class="container py-4">
     
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-light rounded-3 p-3 shadow-sm">
-            <li class="breadcrumb-item">
-                <a href="{{ url_for('main.dashboard') }}" class="text-decoration-none">
-                    <i class="bi bi-house-door me-1"></i>Dashboard
-                </a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">{{ action_title }}</li>
-        </ol>
-    </nav>
 
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-5 fw-bold">{{ action_icon }} {{ action_title }}</h1>
-            <p class="lead text-muted mb-0">Verifica i dettagli prima di procedere</p>
-        </div>
+    <!-- Page Title Header -->
+    {% set title = action_title %}
+    {% set subtitle = "Controlla e personalizza i messaggi prima dell\'invio definitivo." %}
+    {% set icon = 'bi bi-clipboard2-check' if action_type == 'notification' else 'bi bi-chat-left-dots' %}
+    {% set margin_bottom = '4' %}
+    {% include 'atoms/page_header.html' %}
+
+    <div class="mb-5">
+        {{ training_info_card(
+            training=preview.training,
+            action_type=action_type,
+            codice_generato=preview.codice_generato if action_type == 'notification' else None
+        ) }}
     </div>
 
-    {{ training_info_card(
-        training=preview.training,
-        action_type=action_type,
-        codice_generato=preview.codice_generato if action_type == 'notification' else None
-    ) }}
-
-    {{ telegram_messages_card(messages=preview.messages) }}
+    <div class="mb-5">
+        {{ telegram_messages_card(messages=preview.messages) }}
+    </div>
 
     {% if action_type == 'notification' %}
+    <div class="mb-5">
         {{ email_section_card(email=preview.email) }}
+    </div>
     {% endif %}
 
-    {{ action_form(
-        action_type=action_type,
-        training_id=training_id,
-        codice_generato=preview.codice_generato if action_type == 'notification' else None,
-        messages_count=preview.messages|length
-    ) }}
+    <div class="mb-5">
+        {{ action_form(
+            action_type=action_type,
+            training_id=training_id,
+            codice_generato=preview.codice_generato if action_type == 'notification' else None,
+            messages_count=preview.messages|length
+        ) }}
+    </div>
 
 </div>
 {% endblock %}
 
 {% block scripts %}
+<!-- Editor Logic -->
+<script src="{{ url_for('static', filename='js/preview_editor.js') }}"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Hide loading overlay when preview page is fully loaded
@@ -61,14 +62,6 @@
 
 {% block extra_css %}
 <style>
-    .card {
-        transition: transform 0.2s ease-in-out;
-    }
-    
-    .card:hover {
-        transform: translateY(-2px);
-    }
-    
     code.user-select-all {
         user-select: all;
         cursor: pointer;

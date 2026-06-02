@@ -34,7 +34,7 @@ class CalendarOperations:
         self.email_formatter = email_formatter
         self.area_emails = self._load_area_emails()
         
-        logger.info("CalendarOperations inizializzato")
+        logger.debug("CalendarOperations inizializzato")
     
     def _load_area_emails(self) -> Dict[str, str]:
         """Carica il mapping Area → Email dal file JSON."""
@@ -49,10 +49,10 @@ class CalendarOperations:
             return area_emails
             
         except FileNotFoundError:
-            logger.error(f"❌ Config email aree non trovato | Path: {email_config_path}")
+            logger.error(f"Config email aree non trovato | Path: {email_config_path}")
             raise CalendarOperationsError(f"Missing email config: {email_config_path}")
         except json.JSONDecodeError as e:
-            logger.error(f"❌ JSON non valido in config email | Error: {e}")
+            logger.error(f"JSON non valido in config email | Error: {e}")
             raise CalendarOperationsError(f"Invalid email config JSON: {e}")
     
     def _convert_notion_date_to_iso(self, date_str: str) -> str:
@@ -78,7 +78,7 @@ class CalendarOperations:
             raise ValueError(f"Formato data non riconosciuto: {date_str}")
             
         except Exception as e:
-            logger.error(f"❌ Errore conversione data | Input: '{date_str}' | Error: {e}")
+            logger.error(f"Errore conversione data | Input: '{date_str}' | Error: {e}")
             raise CalendarOperationsError(f"Formato data non valido: {date_str}")
     
     def _get_attendee_emails_for_areas(self, areas: List[str]) -> List[str]:
@@ -100,7 +100,7 @@ class CalendarOperations:
         logger.debug(f"Attendee emails risol | Areas: {areas} | Emails: {emails}")
         return emails
     
-    def create_calendar_event(self, formazione_data: Dict) -> Dict:
+    def create_calendar_event(self, formazione_data: Dict, custom_body: str = None) -> Dict:
         """
         Crea un evento calendario con Teams meeting per una formazione.
         
@@ -130,8 +130,6 @@ class CalendarOperations:
             codice = formazione_data.get('Codice', '')
             data_ora = formazione_data.get('Data/Ora', '')
             areas = formazione_data.get('Area', [])
-            
-            logger.info(f"Creazione evento calendario | Nome: {nome}")
             
             # Validazione campi obbligatori
             if not nome or not data_ora:
@@ -173,9 +171,9 @@ class CalendarOperations:
                     "type": "required"
                 })
             
-            # 5. Prepara subject e body (usa direttamente i campi Notion)
+            # 5. Prepara subject e body (usa il custom se presente)
             subject = self.email_formatter.format_subject(formazione_data)
-            body = self.email_formatter.format_calendar_body(formazione_data)
+            body = custom_body if custom_body else self.email_formatter.format_calendar_body(formazione_data)
             
             # 6. Costruisci payload Graph API
             event_payload = {
@@ -201,13 +199,13 @@ class CalendarOperations:
                 json_data=event_payload
             )
             
-            logger.info(f"✅ Evento creato | Event ID: ...{response.get('id', '')[-12:]}")
+            logger.info(f"Evento creato | Event ID: ...{response.get('id', '')[-12:]}")
             
             # 8. Estrai Teams link direttamente dalla risposta
             teams_link = response.get('onlineMeeting', {}).get('joinUrl')
             
             if not teams_link:
-                logger.warning("⚠️ Teams link non trovato nella risposta Graph API")
+                logger.warning("Teams link non trovato nella risposta Graph API")
             
             # 9. Prepara risultato
             result = {
@@ -222,16 +220,16 @@ class CalendarOperations:
             }
             
             logger.info(
-                f"Calendar event created: {result['subject']} | "
+                f"Evento calendario creato: {result['subject']} | "
                 f"Teams: {bool(teams_link)} | "
-                f"Attendees: {', '.join(attendee_emails)}"
+                f"Partecipanti: {len(attendee_emails)}"
             )
             
             return result
             
         except KeyError as e:
-            logger.error(f"❌ Campo obbligatorio mancante | Field: {e}")
+            logger.error(f"Campo obbligatorio mancante | Field: {e}")
             raise CalendarOperationsError(f"Campo obbligatorio mancante: {e}")
         except Exception as e:
-            logger.error(f"❌ Creazione evento fallita | Error: {e}")
+            logger.error(f"Creazione evento fallita | Error: {e}")
             raise CalendarOperationsError(f"Errore creazione evento: {str(e)}")

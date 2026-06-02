@@ -1,0 +1,449 @@
+
+
+{% extends "layout/auth_required.html" %}
+
+{% block page_content %}
+    <!-- Tutorial Header -->
+    {% set title = 'Guida a Formazing' %}
+    {% set subtitle = 'Gestisci le formazioni in 3 click, senza stress e senza errori.' %}
+    {% set icon = 'bi bi-mortarboard' %}
+    {% set margin_bottom = '5' %}
+    {% include 'atoms/page_header.html' %}
+
+    <!-- Cos'è Formazing -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-blu-jemore mb-3">
+                        <i class="bi bi-info-circle-fill me-2 text-blu-jemore"></i> Cos'è Formazing?
+                    </h2>
+                    <p class="text-blu-jemore mb-0">
+                        Formazing è l'applicazione progettata per automatizzare il workflow di gestione delle formazioni in JEMORE. 
+                        Utilizza:
+                    </p>
+                    <ul class="text-blu-jemore mt-2">
+                        <li><strong>Notion</strong> come database, in particolare il database "Formazioni"</li>
+                        <li><strong>Teams</strong>, per creare i link/stanze con cui eseguire le formazioni e inviare <strong>email</strong>, entrambe queste operazioni vengono effettuate con l'account JEMORE del resp formazioni.</li>
+                        <li><strong>Bot Telegram</strong>, per notificare i gruppi.</li>
+                    </ul>
+                    <p class="text-blu-jemore mb-0 mt-3 small opacity-75">
+                        Per usare al meglio il tutto ti consiglio di leggere questa guida fino in fondo, e di usare largamente la sezione FAQ, che contiene già risposta a molte domande che potrebbero sorgere.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Non aver paura -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore border-0">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-blu-jemore mb-3"><i class="bi bi-robot me-2"></i> Non aver paura</h2>
+                    <p class="text-blu-jemore"> 
+                        <strong>Formazing non morde</strong>, non fa niente da solo, non prende iniziative, non impazzisce, non inventa robe, non cambia dati, non invia notifiche a caso, non crea eventi a caso: è un essere perfetto, che non sbaglia mai.<br>
+                        È come un <em>martello</em>: un martello ovviamente può romperti le dita, farti molto male, spaccare finestre, oggetti, di tutto e di più, ma di certo non da solo. Il martello è perfetto per quello che ha da fare, e Formazing è la stessa e identica cosa: è solo uno strumento che se usato correttamente è perfetto, e... <strong>usarlo è super facile</strong> siccome tutte le operazioni sono intuitive e basilari.
+                    </p>
+                    
+                    <p class="text-blu-jemore mb-4">
+                        In più questa guida è fatta apposta per spiegarti tutto <strong>passo passo</strong>, spiegare esattamente cosa fare, cosa non fare assolutamente, cosa fa Formazing, cosa non fa, e fornire una serie di <strong>FAQ</strong> per dubbi di ogni tipo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regole d'Oro -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore border-0">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-giallo-jemore mb-3"><i class="bi bi-shield-lock-fill me-2 text-giallo-jemore"></i> Le Regole d'Oro</h2>
+                    <p class="text-blu-jemore"> 
+                        Infrangere queste semplici regole causerà inevitabilmente errori, notifiche che non partono, eventi Teams che non si creano e via dicendo. Formazing è progettata per essere semplice e lineare, ma ha bisogno di dati corretti e di un utilizzo corretto per funzionare al meglio. 
+                    </p>
+                    <ol class="text-blu-jemore mb-4">
+                        <li class="mb-2"><strong>Non cambiare i gruppi Telegram:</strong> I codici dei gruppi sono fissi in Formazing, quindi ovviamente cambiarli non permetterà più di ricevere notifiche, o meglio le notifiche continueranno ad essere inviate sui vecchi gruppi.</li>
+                        <li class="mb-2"><strong>Non modificare le colonne su Notion:</strong> Cambiare nome alle colonne del database delle formazioni impedirà a Formazing di leggere i dati correttamente.</li>
+                        <li class="mb-2"><strong>Non cambiare i gruppi email delle singole aree:</strong> Formazing invia email a gruppi specifici in base all'area di riferimento inserita su Notion, se i gruppi email cambiano sarà necessario aggiornare i dati in Formazing per continuare ad inviare le email correttamente.</li>
+                        <li class="mb-2"><strong>Non modificare l'email del responsabile formazioni:</strong> Formazing utilizza l'email del responsabile formazioni per inviare le email e calendarizzare su Teams, se questa cambia sarà necessario aggiornare l'email in Formazing.</li>
+                        <li class="mb-2"><strong>Non modificare il link al form di feedback:</strong> Il link al form di feedback è fisso in Formazing, se cambia sarà necessario aggiornare i link in Formazing per continuare ad inviare i messaggi Telegram con i link corretti.</li> 
+                        <li class="mb-2"><strong>Non modificare il formato data/ora su Notion:</strong> Formazing si aspetta un formato specifico per leggere correttamente la data e l'ora, se questo cambia Formazing non riuscirà più a leggere le date e di conseguenza non calendarizzerà più correttamente su Teams né invierà le notifiche con le date corrette.</li>
+                        <li class="mb-2"><strong>Non modificare i nomi delle aree o dei periodi su Notion:</strong> Formazing si basa su nomi specifici per le aree (es. "IT", "R&D", "All", ecc.) e per i periodi (es. "SPRING", "AUTUMN", ecc.) per inviare le notifiche ai gruppi Telegram corretti.
+                        <li class="mb-2"><strong>Non toccare il Codice su Notion:</strong> Modificare il codice a mano potrebbe rompere le analisi Excel dell'area R&D, se proprio necessario modificarlo, assicurati di rispettare le regole nella sezione dedicata al codice formazioni</li>
+                    </ol>
+                    <p class="text-blu-jemore small opacity-75 mb-4"> 
+                        Da notare che in teoria nessuna di questa operazione dovrebbe essere praticamente mai necessaria; in più si tratta di operazioni che non riguardano direttamente il responsabile formazioni, ma bensì altri ruoli. Ad esempio: a modificare la tabella di Notion potrebbe essere qualcuno dell'area <strong>IT</strong> o dell'area <strong>R&D</strong>, a cambiare i gruppi Telegram potrebbe essere il <strong>Board</strong> o i <strong>Resps</strong>, a cambiare i gruppi email potrebbe essere il <strong>Segretario Generale</strong>, ecc...
+                        Il tuo ruolo in quanto responsabile formazioni è fare da <strong>guardiano per la sopravvivenza di Formazing</strong>, ed assicurarti che nessuna di queste operazioni venga fatta, o meglio... di rendere presente a chiunque voglia fare queste operazioni che farle romperebbe Formazing e di conseguenza rovinerebbe la gestione delle formazioni.<br><br>
+                        <em>Altra piccola nota:</em> la maggior parte di queste operazioni è comunque <strong>reversibile</strong>. Es.: se qualcuno cambia i nomi delle colonne su Notion, basta rimetterli come prima e tutto tornerà a funzionare; se qualcuno cambia i gruppi Telegram basta riusare quelli vecchi, ecc. Quindi <strong>niente panico</strong>: se succede qualcosa di strano controlla sempre che queste regole d'oro siano rispettate, e se non lo sono... basta rimettere tutto come prima.                
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- I 3 Stati delle Formazioni -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-blu-jemore mb-4">
+                        <i class="bi bi-layers-half me-2"></i> Gli stati delle formazioni
+                    </h2>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-giallo-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Programmata</h5>
+                                <p class="small text-muted mb-0">La formazione esiste su Notion. Formazing la vede ma non ha ancora inviato nulla. È lo stato con cui nasce ogni formazione. Attenzione Formazing NON visualizza le formazioni senza data</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Calendarizzata</h5>
+                                <p class="small text-muted mb-0">La formazione può considerarsi "ufficiale", quindi grazie a Formazing il codice è stato generato, esiste l'evento Teams creato e i soci sono stati notificati. In attesa dello svolgimento.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-success border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Conclusa</h5>
+                                <p class="small text-muted mb-0">La formazione è terminata e il link al feedback è stato inviato sui gruppi Telegram.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- I comandi del Bot Telegram -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-blu-jemore mb-4">
+                        <i class="bi bi-chat-dots-fill me-2"></i> I comandi del Bot Telegram
+                    </h2>
+                    <p class="text-blu-jemore mb-4">
+                        Oltre alle notifiche automatiche, puoi interagire con il bot per interrogare il database di Notion in tempo reale. Questi comandi sono utili per soci e responsabili per avere un promemoria rapido.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">/oggi</h5>
+                                <p class="small text-muted mb-0">Mostra le formazioni calendarizzate per la giornata odierna, complete di orario e link Teams.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">/domani</h5>
+                                <p class="small text-muted mb-0">Mostra le formazioni in programma per domani, complete di orario e link Teams.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">/settimana</h5>
+                                <p class="small text-muted mb-0">Riepilogo di tutte le formazioni previste nella settimana corrente (Lunedì-Domenica).</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">/prossima_settimana</h5>
+                                <p class="small text-muted mb-0">Permette di vedere tutte le formazioni della settimana successiva.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-jemore h-100 border-start border-giallo-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">/help</h5>
+                                <p class="small text-muted mb-0">Mostra la lista dei comandi e brevi istruzioni sul funzionamento del bot.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics & Reporting -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-blu-jemore mb-4">
+                        <i class="bi bi-graph-up-arrow me-2 text-blu-jemore"></i> Report & Analytics
+                    </h2>
+                    <p class="text-blu-jemore mb-4">
+                        La pagina Analytics trasforma i dati operativi di Notion in informazioni strategiche per monitorare la crescita e il bilanciamento dell'associazione.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Indicatori di Performance (KPI)</h5>
+                                <p class="small text-muted mb-0">Visualizza l'Area più attiva e confronta la <strong>Media Accademica</strong> (da Settembre ad oggi) con la <strong>Media storica</strong>.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Distribuzione Aree</h5>
+                                <p class="small text-muted mb-0">Un grafico che raggruppa le macro-aree (IT, HR, etc.) distinguendo chiaramente tra formazione per i <strong>Soci</strong> e per i <strong>Soci in Prova</strong>.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Linee Temporali</h5>
+                                <p class="small text-muted mb-0">Guarda la crescita totale dalla nascita di Formazing oppure esplora il dettaglio mensile di un anno specifico tramite il selettore.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card-jemore h-100 border-start border-giallo-jemore border-4 p-3 shadow-none bg-light">
+                                <h5 class="fw-bold text-blu-jemore">Aggiornamento Real-time</h5>
+                                <p class="small text-muted mb-0">Proprio come nella Dashboard, puoi usare il tasto <strong>Aggiorna da Notion</strong> per ricaricare le statistiche con i dati freschi del database.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Anatomia del Codice -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore">
+                <div class="card-body p-4">
+                    <h2 class="h4 fw-bold text-blu-jemore mb-3"><i class="bi bi-code-square me-2 text-blu-jemore"></i> Anatomia del Codice Formazione</h2>
+
+                    <p class="text-blu-jemore">
+                        Formazing genera automaticamente un <strong>codice parlante</strong>. Questo codice ha come obiettivo quello di rappresentare univocamente ogni formazione, e di fornire a colpo d'occhio le informazioni principali sulla formazione stessa.<br>
+                        Tale codice viene poi usato per identificare la formazione in maniera univoca, in particolare per quando si vogliono analizzare i <strong>dati di feedback su Excel</strong>. Infatti è sia possibile guardare i dati su una singola formazione cercando il codice specifico, sia andare a vedere <strong>analisi aggregate</strong>, basate sui vari campi.<br>
+                        Infatti ogni parte del codice ci dà un'informazione, che come tale può essere analizzata individualmente, ad esempio per sapere solo le info delle formazioni di un anno specifico, o di un'area specifica, o di un'area specifica in un determinato anno, ecc.<br>
+                        <strong>Es.</strong> <code>IT-Sicurezza_informatica-2026-SPRING-01</code>. <br>Tale codice è così composto:
+                    </p>
+                    <div class="row g-2 text-center my-4">
+                        <div class="col"><div class="p-2 bg-blu-jemore text-white rounded-start fw-bold small">AREA</div></div>
+                        <div class="col-3"><div class="p-2 bg-giallo-jemore text-giallo-jemore-fg fw-bold small">NOME</div></div>
+                        <div class="col"><div class="p-2 bg-blu-jemore text-white fw-bold small">ANNO</div></div>
+                        <div class="col"><div class="p-2 bg-giallo-jemore text-giallo-jemore-fg fw-bold small">PERIODO</div></div>
+                        <div class="col"><div class="p-2 bg-blu-jemore text-white rounded-end fw-bold small">SEQ</div></div>
+                    </div>
+
+                    <div class="row text-blu-jemore g-4 mt-2">
+                            
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-geo-alt-fill me-2"></i> 1. AREA</h6>
+                            <p class="small mb-1">Identifica l'area a cui è rivolto l'evento. Opzioni disponibili:</p>
+                            <ul class="small ps-3 mb-0">
+                                <li><strong>IT, R&D, HR, Legal, Marketing, Commerciale: Formazioni per i soci effettivi delle rispettive aree</strong></li>
+                                <li:><strong>IT in prova, R&D in prova, HR in prova, Legal in prova, Marketing in prova, Commerciale in prova</strong>: Formazioni per i soci in prova delle rispettive aree.</li>
+                                 <li><strong>All:</strong> Rivolto a tutta l'associazione.</li>
+                                 <li><strong>In prova:</strong> Rivolto a tutti i soci in prova, indipendentemente dall'area.</li>
+                            </ul>
+                            <p class="extra-small text-muted mt-2 mb-0"><i class="bi bi-info-circle"></i> Determina a quali gruppi Telegram e liste email inviare le notifiche.</p>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-fonts me-2"></i> 2. NOME</h6>
+                            <p class="small mb-0">Il nome della formazione. Gli spazi vengono convertiti automaticamente in <em>underscore</em> (es. <code>Sicurezza_informatica</code>). Per ottenere un codice più bello e leggibile è sconsigliato usare nomi esageratamente lunghi o con caratteri strani</p>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-calendar3 me-2"></i> 3. ANNO</h6>
+                            <p class="small mb-0">L'anno a 4 cifre (es. <code>2026</code>) in cui viene erogata la formazione, estratto direttamente dalla data inserita su Notion. Utile per i report storici ed aggregati di fine anno.</p>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-calendar-event me-2"></i> 4. PERIODO</h6>
+                            <p class="small mb-1">Specifica la ricorrenza o la natura della formazione:</p>
+                            <ul class="small ps-3 mb-0">
+                                <li><strong>SPRING:</strong> Formazioni interne erogate durante il recruitment primaverile.</li>
+                                <li><strong>AUTUMN:</strong> Formazioni interne erogate durante il recruitment autunnale.</li>
+                                <li><strong>ONCE:</strong> Formazioni interne una tantum.</li>
+                                <li><strong>EXT:</strong> Formazioni che NOI RICEVIAMO DALL'ESTERNO (es. da aziende, professionisti o altre JE) per sviluppare nuove competenze. Quindi EXT sta appunto per esterni</li>
+                                <li><strong>OUT:</strong> Formazioni che NOI EROGHIAMO verso l'esterno, ad esempio ad altre JE che ce lo chiedono. Quindi Out perché la formazione è verso fuori. Può sembrare un po' confuso, ma qualsiasi altra soluzione sarebbe stata confusa</li>
+                            </ul>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-123 me-2"></i> 5. SEQ (Numero Sequenziale)</h6>
+                            <p class="small mb-0">Un contatore numerico progressivo a due cifre (es. <code>01</code>, <code>02</code>). Formazing calcola in automatico il contatore, per avere un effetto progressivo.
+                                Il contatore in sé e per sé serve solo per rendere il codice più leggibile, assicurarsi al 200% che il codice sia univoco, e per avere un'idea immediata di quante formazioni siano 
+                                state erogate e dell'ordine di calendarizzazione.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Il Workflow -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card-jemore shadow-lg-jemore bg-bianco-latte">
+                <div class="card-body py-3 py-md-4 px-2 px-md-3">
+                    <h2 class="h3 fw-bold text-blu-jemore mb-4 text-center">Il Workflow Operativo</h2>
+                                        
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            
+                            {% set title = '1. Notion: Inserimento Dati' %}
+                            {% set content = "
+                            <p class='text-blu-jemore'>
+                                Vai su Notion e crea una nuova pagina, inserendo solo
+                            </p>
+                            <ul class='small text-blu-jemore'>
+                                <li> Il nome della formazione (es. \"Sicurezza Informatica\") </li>
+                                <li> L'area di riferimento (es. \"IT\") </li>
+                                <li> La data e l'ora di inizio (es. \"20/06/2002 17:30\") </li>
+                                <li> Il periodo di riferimento (es. \"Spring\") </li>
+                                <li> Imposta lo stato su \"Programmata\" </li>
+                            </ul>
+                            <p class='text-blu-jemore'>
+                                Non inserire il codice formazione, non inserire il link Teams, non compilare nulla che non sia richiesto. Formazing si occuperà di tutto, tu devi solo inserire i dati richiesti e assicurarti che siano corretti. 
+                            </p>
+                            " %}
+                            {% include 'atoms/tutorial_step.html' %}
+                            
+                            {% set title = '2. App: Invio Comunicazioni' %}
+                            {% set content = "
+                            <p class='text-blu-jemore'>
+                                Apri Formazing, vai alla dashboard e clicca sul tasto <strong>Preview</strong> di una formazione <i>'Programmata'</i>. Formazing aprirà un <strong>Editor Live</strong> professionale in modalità <i>Split-View</i>:
+                            </p>
+                            <ul class='small text-blu-jemore'>
+                                <li><strong>Editor a Sinistra:</strong> Qui troverai il testo generato automaticamente che puoi modificare liberamente. Puoi usare il Markdown per Telegram (es: **grassetto**) e l'HTML per l'Email.</li>
+                                <li><strong>Anteprima a Destra:</strong> Un mockup realistico che ti mostra esattamente come apparirà il messaggio nel fumetto di Telegram e nella mail di Outlook.</li>
+                            </ul>
+                            <p class='text-blu-jemore'>
+                                Dovresti controllare:
+                            </p>
+                            <ul class='small text-blu-jemore'>
+                                <li> Che il nome, l'area, la data e il periodo siano corretti. Nota bene: se ci sono degli errori o simili la colpa è... tua, Formazing non fa altro che leggere i nomi da notion, non li cambia né tocca in alcun modo, se ci sono degli errori o qualcosa non viene trovato prova a controllare cosa hai inserito su notion.</li>
+                                <li> Se il codice è corretto. Nota bene: se il codice non è come l'aspettavi la colpa è... tua, Formazing genera il codice in automatico basandosi sui dati che hai inserito su Notion. Se è sbagliato, è perché i dati su Notion sono sbagliati. Controlla bene nome, area, data e periodo su Notion, correggili se necessario e ricontrolla la preview finché il codice non è perfetto.</li>
+                                <li> Che i gruppi telegram siano corretti. Nota bene: se i gruppi non sono come l'aspettavi la colpa è... tua, Formazing  utilizza sempre lo stesso messaggio, e sempre gli stessi link per i gruppi Telegram, che sono fissi in Formazing.</li>
+                                <li> Che la data/ora dell'evento Teams sia corretta. Nota bene: sarò ripetitivo ma se è sbagliata la colpa è... tua, Formazing prende la data e l'ora direttamente da Notion, se è sbagliata controlla i dati su Notion.</li>
+                                <li> Che i destinatari dell'email siano corretti. Ancora... se è sbagliato la colpa è tua, Formazing sceglie i destinatari in base all'area che hai inserito su Notion, se è sbagliata controlla i dati su Notion.</li>
+                            </ul>
+                            <p class='text-blu-jemore'>
+                                Tutti questi dati (presi da notion) possono sì essere modificait nell'editor live, ma se compaiono subito errati nell'editor live, è perché i dati su Notion sono errati, quindi è meglio correggerli direttamente su Notion, l'editor serve per cambiare il TESTO dei messaggi, non per correggere i dati, altrimenti si rischia di creare discrepanze.
+                                <br><strong>La Sicurezza prima di tutto:</strong> Mentre personalizzi i messaggi, Formazing monitora meglio che può i dati vitali (Link Teams, Codice, Data, Nome). Se cancelli per sbaglio uno di questi dati, l'editor si colorerà di rosso e il tasto di invio diventerà <strong>Rosso</strong>, chiedendoti una conferma extra prima di procedere.
+                                Modifica le informazioni della formazione solo se sei sicuro di quello che stai facendo.
+                            </p>
+                            <p class='text-blu-jemore small opacity-75'>
+                                Se svuoti completamente un editor Telegram, quel messaggio verrà saltato; se svuoti l'email, verrà inviata quella di default.
+                            </p>
+                            <p class='text-blu-jemore'> 
+                                Controllati i dettagli, clicca su <strong>'Conferma e Invia'</strong>. Formazing si occuperà di creare l'evento Teams, inviare l'email e notificare i gruppi Telegram con i tuoi messaggi personalizzati.
+                            </p>
+                            <p class='text-blu-jemore'>
+                                Per conoscenza personale ti spiego anche cosa effettivamente e concretamente andrà a fare Formazing quando cliccherai su <strong>'Conferma e Invia'</strong>, così da sapere esattamente cosa accade e di conseguenza cosa NON devi fare manualmente su Notion o altrove. Formazing si occuperà di:
+                            </p>
+                            <ul class='small list-unstyled text-blu-jemore'>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Cambiare lo stato su Notion da 'Programmata' a 'Calendarizzata'.</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Generare il codice univoco per la formazione.</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Creare l'evento su Microsoft Teams.</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Inviare l'email con link Teams allegato.</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Inserire il link Teams su Notion.</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Inserire il codice formazione su Notion.</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Inviare i messaggi Telegram ai gruppi, con tutte le informazioni relative alla formazione.</li>
+                            </ul>
+                            " %}
+                            {% include 'atoms/tutorial_step.html' %}
+
+                            {% set title = '3. App: Chiusura e Feedback' %}
+                            {% set content = "
+                            <p class='text-blu-jemore'>
+                                Una volta conclusa la formazione, vai nella tab <i>'Calendarizzate'</i> e clicca su <strong>Preview</strong>. Anche in questa fase avrai a disposizione l'<strong>Editor Live</strong> con l'anteprima WYSIWYG per personalizzare il messaggio di richiesta feedback.
+                            </p>
+                            <ul class='small text-blu-jemore'>
+                                <li> Controlla che il link al form di feedback e il codice formazione siano presenti (il sistema ti avviserà in rosso se li rimuovi).</li>
+                                <li> Personalizza il messaggio se vuoi aggiungere ringraziamenti o note specifiche per la sessione appena conclusa.</li>
+                            </ul>
+                            <p class='text-blu-jemore'>
+                                Clicca su <strong>'Conferma e Invia'</strong>. Formazing si occuperà di inviare i messaggi personalizzati ai gruppi e aggiornare lo stato su Notion da 'Calendarizzata' a 'Conclusa'. Fine del lavoro!
+                            </p>
+                            <p class='text-blu-jemore'>
+                                Per conoscenza personale, ecco cosa farà Formazing:
+                            </p>
+                            <ul class='small text-blu-jemore list-unstyled'>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Inviare i messaggi Telegram con il link al form di feedback (eventualmente modificati da te).</li>
+                                <li><i class='bi bi-check2-circle text-success me-2'></i> Aggiornare lo stato su Notion a 'Conclusa'.</li>
+                            </ul>
+                            " %}
+                            {% include 'atoms/tutorial_step.html' %}
+                            
+                            
+                            {% set title = 'Note Generali' %}
+                            {% set content = "
+                            <p class='text-blu-jemore'>
+                                Giusto due piccoli chiarimenti: 
+                            </p>
+                            <ul class='small text-blu-jemore'>
+                                <li> Quando ci si riferisce a \"i relativi gruppi Telegram\" si intendono il gruppo Telegram dell'area di riferimento (es. \"IT\") o delle aree di riferimento (es. \"IT\" + \"HR\") inseriti su Notion, più il gruppo Telegram generale dell'associazione, nel topic \"Formazioni\".</li>
+                                <li> Ovviamente non è necessario controllare ogni singola cosa ogni volta, questa spiegazione è volutamente dettagliata proprio per far capire che Formazing non prende iniziative da sola, non inventa dati, non li processa o cambia in maniera indipendente o fantasiosa, ma si limita a leggere i dati da Notion, e usare informazioni fisse (es. i link ai form, link ai gruppi telegram, email ecc..) e a eseguire operazioni standardizzate e ripetitive basate su quei dati.</li>
+                            " %}
+                            {% include 'atoms/tutorial_step.html' %}
+                            
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- FAQ Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="fw-bold text-white mb-4 text-center">FAQ</h3>
+            
+            <div class="accordion" id="faqAccordion">
+                {% if faqs %}
+                    {% for faq in faqs %}
+                        {% set id = loop.index %}
+                        {% set parent_id = 'faqAccordion' %}
+                        {% set title = faq.question %}
+                        {% set content = faq.answer %}
+                        {% include 'atoms/accordion_item.html' %}
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-white-50">
+                        <i class="bi bi-question-circle display-4 mb-2"></i>
+                        <p>Nessuna FAQ caricata dal sistema.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Supporto -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="p-4 bg-bianco-latte rounded-jemore shadow-sm border">
+                <h5 class="fw-bold text-blu-jemore mb-2">Problemi Tecnici? Dubbi? Domande?</h5>
+                <p class="text-blu-jemore small mb-3">
+                <strong>Innanzitutto rileggi la guida</strong>, il workflow operativo e le FAQ: molto probabilmente la risposta al tuo dubbio è già lì.<br><br>
+                <em>Se invece dovesse essersi rotto qualcosa</em> o dovessi riscontrare un comportamento anomalo, è molto probabile che tu abbia infranto una delle <strong>regole d'oro</strong>, quindi rileggile attentamente e controlla che siano rispettate.<br><br>
+                Se non riesci a risolvere, contatta il tuo <strong>ex-responsabile formazioni</strong>, che è la persona più indicata per aiutarti, e che sicuramente saprà risolvere il problema, rispondere alla tua domanda, oppure indirizzarti verso chi può farlo.<br><br>
+                Nel caso in cui neanche lui riesca ad aiutarti, o se vuoi semplicemente contattare direttamente il <strong>creatore di Formazing</strong> per qualsiasi motivo, non esitare a scrivermi!! Sarà un piacere aiutarti e rispondere a qualsiasi domanda tu possa avere riguardo Formazing, il suo funzionamento, o qualsiasi altra cosa tu voglia chiedere.
+                </p>
+                <div class="d-flex flex-column align-items-center">
+                    <h6 class="fw-bold text-blu-jemore mb-2">Luca Di Leo</h6>
+                    <a href="https://www.linkedin.com/in/luca-dileo/" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-linkedin me-1"></i> LinkedIn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hide loading overlay when tutorial page is fully loaded
+        LoadingOverlay.hide();
+    });
+</script>
+{% endblock %}

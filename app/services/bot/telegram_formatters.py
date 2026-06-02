@@ -81,9 +81,9 @@ class TelegramFormatter:
         training_templates = self.templates.get('training_notification', {}).get('telegram', {})
         
         if group_key == 'main_group':
-            template = training_templates.get('main_group', '❌ Template main_group non trovato')
+            template = training_templates.get('main_group', 'Template main_group non trovato')
         else:
-            template = training_templates.get('area_group', '❌ Template area_group non trovato')
+            template = training_templates.get('area_group', 'Template area_group non trovato')
         
         # Formattazione con gestione errori
         try:
@@ -92,7 +92,7 @@ class TelegramFormatter:
             return formatted_message
         except (KeyError, ValueError) as e:
             logger.error(f"Errore formattazione template training per {group_key}: {e}")
-            return f"❌ Errore nella formattazione del messaggio per la formazione: {nome}"
+            return f"Errore nella formattazione del messaggio per la formazione: {nome}"
     
     def format_feedback_message(self, training_data: Dict, feedback_link: str, group_key: str) -> str:
         """
@@ -115,7 +115,7 @@ class TelegramFormatter:
         nome = training_data.get('Nome', 'N/A')
         area_raw = training_data.get('Area', 'N/A')
         
-        # ✨ Formatta Area: lista → stringa (es. ['IT', 'R&D'] → 'IT, R&D')
+        # Formatta Area: lista -> stringa (es. ['IT', 'R&D'] -> 'IT, R&D')
         if isinstance(area_raw, list):
             area = ', '.join(area_raw) if area_raw else 'N/A'
         else:
@@ -134,7 +134,7 @@ class TelegramFormatter:
         # Recupero template feedback (unico per tutti i gruppi)
         feedback_template = (self.templates.get('feedback_request', {})
                            .get('telegram', {})
-                           .get('message', '❌ Template feedback non trovato'))
+                           .get('message', 'Template feedback non trovato'))
         
         # Formattazione con gestione errori
         try:
@@ -143,7 +143,7 @@ class TelegramFormatter:
             return formatted_message
         except (KeyError, ValueError) as e:
             logger.error(f"Errore formattazione template feedback: {e}")
-            return f"❌ Errore nella formattazione del messaggio feedback per la formazione: {nome}"
+            return f"Errore nella formattazione del messaggio feedback per la formazione: {nome}"
     
     def _format_date_time(self, data_ora) -> str:
         """

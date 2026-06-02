@@ -2,15 +2,20 @@
 
 {% block page_content %}
     <!-- Dashboard Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="h2 fw-bold">
-                {% set name = 'bi bi-speedometer2' %}
-                {% set size = 'text-primary me-2' %}
-                {% include 'atoms/icon.html' %}
-                Dashboard Formazioni
-            </h1>
-            <p class="text-muted">Panoramica completa di tutte le formazioni da Notion</p>
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+            {% set title = 'Dashboard Formazioni' %}
+            {% set subtitle = 'Panoramica completa di tutte le formazioni da Notion' %}
+            {% set icon = 'bi bi-speedometer2' %}
+            {% include 'atoms/page_header.html' %}
+        </div>
+        <div class="mt-2">
+            {% set text = 'Aggiorna da Notion' %}
+            {% set icon = 'bi bi-arrow-clockwise' %}
+            {% set variant = 'btn-jemore-dark-blu' %}
+            {% set size = 'btn-sm' %}
+            {% set onclick = "refreshDashboard()" %}
+            {% include 'atoms/button.html' %}
         </div>
     </div>
 
@@ -18,106 +23,91 @@
     {% include 'organisms/dashboard_stats.html' %}
 
     <!-- Tabs Navigation with Content -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white">
-            <ul class="nav nav-tabs card-header-tabs" id="formazioniTabs" role="tablist">
+    <div class="card-jemore border-0 shadow-sm">
+        <div class="card-header border-bottom-0 pb-0">
+            <ul class="nav nav-tabs card-header-tabs border-bottom-0" id="formazioniTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="programmata-tab" data-bs-toggle="tab" 
+                    <button class="nav-link active fw-bold px-4 py-3 border-0 text-giallo-jemore" id="programmata-tab" data-bs-toggle="tab" 
                             data-bs-target="#programmata" type="button" role="tab">
-                        {% set name = 'bi bi-clock' %}
-                        {% set size = 'me-1' %}
-                        {% include 'atoms/icon.html' %}
-                        Programmate ({{ stats.programmata }})
+                        <i class="bi bi-clock me-2"></i>
+                        Programmate: {{ stats.programmata }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="calendarizzata-tab" data-bs-toggle="tab" 
+                    <button class="nav-link fw-bold px-4 py-3 border-0 text-blu-jemore" id="calendarizzata-tab" data-bs-toggle="tab" 
                             data-bs-target="#calendarizzata" type="button" role="tab">
-                        {% set name = 'bi bi-calendar-event' %}
-                        {% set size = 'me-1' %}
-                        {% include 'atoms/icon.html' %}
-                        Calendarizzate ({{ stats.calendarizzata }})
+                        <i class="bi bi-calendar-event me-2 "></i>
+                        Calendarizzate: {{ stats.calendarizzata }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="conclusa-tab" data-bs-toggle="tab" 
+                    <button class="nav-link fw-bold px-4 py-3 border-0 text-success" id="conclusa-tab" data-bs-toggle="tab" 
                             data-bs-target="#conclusa" type="button" role="tab">
-                        {% set name = 'bi bi-check-circle' %}
-                        {% set size = 'me-1' %}
-                        {% include 'atoms/icon.html' %}
-                        Concluse ({{ stats.conclusa }})
+                        <i class="bi bi-check-circle me-2"></i>
+                        Concluse: {{ stats.conclusa }}
                     </button>
                 </li>
             </ul>
         </div>
 
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="tab-content" id="formazioniTabsContent">
                 
                 <!-- Programmate Tab -->
                 <div class="tab-pane fade show active" id="programmata" role="tabpanel">
-                    {% if formazioni_programmata %}
-                        <div class="alert alert-warning border-0 mb-3">
-                            {% set name = 'bi bi-exclamation-triangle' %}
-                            {% set size = 'me-2' %}
-                            {% include 'atoms/icon.html' %}
-                            <strong>Formazioni da calendarizzare:</strong> Queste formazioni sono pronte per l'invio delle comunicazioni.
-                        </div>
-                        {% set formazioni = formazioni_programmata %}
-                        {% include 'organisms/formazioni_table.html' %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            {% set name = 'bi bi-check-circle-fill' %}
-                            {% set size = 'text-success display-1 mb-3' %}
-                            {% include 'atoms/icon.html' %}
-                            <h4 class="text-muted">Nessuna formazione da programmare</h4>
-                            <p class="text-muted">Tutte le formazioni sono state calendarizzate o concluse.</p>
-                        </div>
-                    {% endif %}
+                    <div class="p-4">
+                        {% if formazioni_programmata %}
+                            <div class="alert bg-white border-0 mb-4 shadow-sm text-blu-jemore">
+                                <strong>Formazioni da calendarizzare:</strong> Queste formazioni sono pronte per l'invio delle comunicazioni.
+                            </div>
+                            {% set formazioni = formazioni_programmata %}
+                            {% include 'organisms/formazioni_table.html' %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-check-circle-fill text-success display-1 mb-3"></i>
+                                <h4 class="text-muted">Nessuna formazione da programmare</h4>
+                                <p class="text-muted">Tutte le formazioni sono state calendarizzate o concluse.</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Calendarizzate Tab -->
                 <div class="tab-pane fade" id="calendarizzata" role="tabpanel">
-                    {% if formazioni_calendarizzata %}
-                        <div class="alert alert-info border-0 mb-3">
-                            {% set name = 'bi bi-info-circle' %}
-                            {% set size = 'me-2' %}
-                            {% include 'atoms/icon.html' %}
-                            <strong>Formazioni in programma:</strong> Comunicazioni inviate, in attesa di svolgimento.
-                        </div>
-                        {% set formazioni = formazioni_calendarizzata %}
-                        {% include 'organisms/formazioni_table.html' %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            {% set name = 'bi bi-calendar-x' %}
-                            {% set size = 'text-muted display-1 mb-3' %}
-                            {% include 'atoms/icon.html' %}
-                            <h4 class="text-muted">Nessuna formazione calendarizzata</h4>
-                            <p class="text-muted">Non ci sono formazioni in programma al momento.</p>
-                        </div>
-                    {% endif %}
+                    <div class="p-4">
+                        {% if formazioni_calendarizzata %}
+                            <div class="alert bg-white border-0 mb-4 shadow-sm text-blu-jemore">
+                                <strong>Formazioni in programma:</strong> Comunicazioni inviate, in attesa di svolgimento.
+                            </div>
+                            {% set formazioni = formazioni_calendarizzata %}
+                            {% include 'organisms/formazioni_table.html' %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-calendar-x text-muted display-1 mb-3"></i>
+                                <h4 class="text-muted">Nessuna formazione calendarizzata</h4>
+                                <p class="text-muted">Non ci sono formazioni in programma al momento.</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Concluse Tab -->
                 <div class="tab-pane fade" id="conclusa" role="tabpanel">
-                    {% if formazioni_conclusa %}
-                        <div class="alert alert-success border-0 mb-3">
-                            {% set name = 'bi bi-check-circle' %}
-                            {% set size = 'me-2' %}
-                            {% include 'atoms/icon.html' %}
-                            <strong>Formazioni completate:</strong> Formazioni svolte e concluse.
-                        </div>
-                        {% set formazioni = formazioni_conclusa %}
-                        {% include 'organisms/formazioni_table.html' %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            {% set name = 'bi bi-hourglass' %}
-                            {% set size = 'text-muted display-1 mb-3' %}
-                            {% include 'atoms/icon.html' %}
-                            <h4 class="text-muted">Nessuna formazione conclusa</h4>
-                            <p class="text-muted">Le formazioni concluse appariranno qui.</p>
-                        </div>
-                    {% endif %}
+                    <div class="p-4">
+                        {% if formazioni_conclusa %}
+                            <div class="alert bg-white border-0 mb-4 shadow-sm text-blu-jemore">
+                                <strong>Formazioni completate:</strong> Formazioni svolte e concluse.
+                            </div>
+                            {% set formazioni = formazioni_conclusa %}
+                            {% include 'organisms/formazioni_table.html' %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-hourglass text-muted display-1 mb-3"></i>
+                                <h4 class="text-muted">Nessuna formazione conclusa</h4>
+                                <p class="text-muted">Le formazioni concluse appariranno qui.</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
                 
             </div>
@@ -132,5 +122,12 @@
         // Hide loading overlay when dashboard is fully loaded
         LoadingOverlay.hide();
     });
+
+    function refreshDashboard() {
+        // Mostra transizione professionale tramite loading page
+        const targetUrl = "{{ url_for('main.dashboard', force_refresh=1) }}";
+        const loadingUrl = `/loading?next=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent('Aggiornamento Dati')}&message=${encodeURIComponent('Recupero formazioni fresche da Notion...')}`;
+        window.location.href = loadingUrl;
+    }
 </script>
 {% endblock %}

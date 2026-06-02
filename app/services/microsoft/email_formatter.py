@@ -41,7 +41,7 @@ class EmailFormatter:
         
         self.template_path = Path(template_path)
         self.templates = self._load_templates()
-        logger.info(f"EmailFormatter inizializzato | Template: {self.template_path}")
+        logger.debug(f"EmailFormatter inizializzato | Template: {self.template_path}")
     
     def _load_templates(self) -> Dict:
         """
@@ -61,13 +61,13 @@ class EmailFormatter:
             return templates
             
         except FileNotFoundError:
-            logger.error(f"❌ Template file non trovato | Path: {self.template_path}")
+            logger.error(f"Template file non trovato | Path: {self.template_path}")
             raise EmailFormatterError(f"Template file not found: {self.template_path}")
         except yaml.YAMLError as e:
-            logger.error(f"❌ YAML parsing error | Error: {e}")
+            logger.error(f"YAML parsing error | Error: {e}")
             raise EmailFormatterError(f"Invalid YAML in template file: {e}")
         except Exception as e:
-            logger.error(f"❌ Errore caricamento templates | Error: {e}")
+            logger.error(f"Errore caricamento templates | Error: {e}")
             raise EmailFormatterError(f"Failed to load templates: {e}")
     
     def _format_date(self, date_value) -> str:
@@ -101,7 +101,7 @@ class EmailFormatter:
             return f"{giorno_settimana} {date_obj.day} {mese} {date_obj.year} - {date_obj.strftime('%H:%M')}"
             
         except Exception as e:
-            logger.warning(f"⚠️ Date formatting error | Error: {e} | Using original value")
+            logger.warning(f"Date formatting error | Error: {e} | Using original value")
             return str(date_value)
     
     def format_calendar_body(self, formazione_data: Dict) -> str:
@@ -156,7 +156,7 @@ class EmailFormatter:
             return body_html
             
         except KeyError as e:
-            logger.error(f"❌ Template variable mancante | Error: {e}")
+            logger.error(f"Template variable mancante | Error: {e}")
             raise EmailFormatterError(f"Missing variable in template: {e}")
         except Exception as e:
             logger.error(f"Body formatting error: {e}")

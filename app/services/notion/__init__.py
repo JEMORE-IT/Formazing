@@ -57,10 +57,10 @@ class NotionService:
             self.crud_operations = NotionCrudOperations(self.client)
             self.diagnostics = NotionDiagnostics(self.client)
             
-            logger.info("✅ NotionService modulare inizializzato | Componenti: Client, QueryBuilder, DataParser, CRUD, Diagnostics")
+            logger.debug("NotionService modulare inizializzato | Componenti: Client, QueryBuilder, DataParser, CRUD, Diagnostics")
             
         except Exception as e:
-            logger.error(f"❌ Errore inizializzazione NotionService | Error: {e}")
+            logger.error(f"Errore inizializzazione NotionService | Error: {e}")
             raise NotionServiceError(f"Inizializzazione fallita: {e}")
     
     # ===============================
@@ -82,8 +82,6 @@ class NotionService:
         Raises:
             NotionServiceError: Errori API o parsing dati
         """
-        logger.info(f"Query formazioni by status | Status: '{status}'")
-        
         try:
             # 1. Costruisci query con QueryBuilder
             query = self.query_builder.build_status_filter_query(
@@ -97,13 +95,76 @@ class NotionService:
             # 3. Parsa risultati con DataParser
             formazioni = self.data_parser.parse_formazioni_list(response)
             
-            logger.info(f"✅ Formazioni recuperate | Status: '{status}' | Count: {len(formazioni)}")
+            logger.info(f"Formazioni recuperate | Status: '{status}' | Count: {len(formazioni)}")
             return formazioni
             
         except Exception as e:
-            logger.error(f"❌ Errore query formazioni | Status: '{status}' | Error: {e}")
+            logger.error(f"Errore query formazioni | Status: '{status}' | Error: {e}")
             raise NotionServiceError(f"Errore recupero formazioni: {e}")
     
+    async def get_dashboard_data(self) -> Dict[str, List[Dict]]:
+        """
+        Recupera tutti i dati per la dashboard in un'unica operazione ottimizzata.
+        
+        GESTISCE:
+        - Singola chiamata API globale (più veloce di 3 chiamate separate)
+        - Paginazione automatica (supera il limite dei 100 record di Notion)
+        - Suddivisione dati in Python per stato
+        
+        Returns:
+            Dict[str, List[Dict]]: Dizionario con chiavi 'Programmata', 'Calendarizzata', 'Conclusa'
+        """
+        try:
+            all_raw_results = []
+            next_cursor = None
+            has_more = True
+            
+            # Ciclo di paginazione per recuperare TUTTI i record (anche > 100)
+            while has_more:
+                query = self.query_builder.build_all_records_query(
+                    database_id=self.client.get_database_id(),
+                    next_cursor=next_cursor
+                )
+                
+                response = self.client.get_client().databases.query(**query)
+                all_raw_results.extend(response.get('results', []))
+                
+                has_more = response.get('has_more', False)
+                next_cursor = response.get('next_cursor')
+                
+                if has_more:
+                    logger.debug(f"Paginazione Notion attiva... recuperati finora {len(all_raw_results)} record")
+            
+            # Parsing completo della lista unica
+            # Creiamo un oggetto finto di risposta per riutilizzare parse_formazioni_list
+            fake_response = {'results': all_raw_results}
+            formazioni_totali = self.data_parser.parse_formazioni_list(fake_response)
+            
+            # Suddivisione in Python
+            dashboard_data = {
+                'Programmata': [],
+                'Calendarizzata': [],
+                'Conclusa': []
+            }
+            
+            for f in formazioni_totali:
+                stato = f.get('Stato')
+                if stato in dashboard_data:
+                    dashboard_data[stato].append(f)
+                else:
+                    logger.warning(f"Formazione '{f['Nome']}' ha uno stato sconosciuto: '{stato}'")
+            
+            logger.info(f"Dashboard data pronta | Totale: {len(formazioni_totali)} | "
+                       f"P: {len(dashboard_data['Programmata'])} | "
+                       f"C: {len(dashboard_data['Calendarizzata'])} | "
+                       f"F: {len(dashboard_data['Conclusa'])}")
+            
+            return dashboard_data
+            
+        except Exception as e:
+            logger.error(f"Errore critico nel recupero dashboard data: {e}")
+            raise NotionServiceError(f"Errore ottimizzazione query: {e}")
+
     async def update_formazione(self, notion_id: str, updates: Dict) -> bool:
         """
         Aggiorna formazione con campi multipli in una singola operazione atomica.
@@ -121,8 +182,6 @@ class NotionService:
         Raises:
             NotionServiceError: Errori API o validazione
         """
-        logger.info(f"Aggiornamento formazione | ID: ...{notion_id[-8:]} | Campi: {list(updates.keys())}")
-        
         try:
             success = await self.crud_operations.update_multiple_fields(notion_id, updates)
             
@@ -134,7 +193,7 @@ class NotionService:
             return success
             
         except Exception as e:
-            logger.error(f"❌ Errore aggiornamento formazione | ID: ...{notion_id[-8:]} | Error: {e}")
+            logger.error(f"Errore aggiornamento formazione | ID: ...{notion_id[-8:]} | Error: {e}")
             raise NotionServiceError(f"Errore aggiornamento: {e}")
     
     async def update_formazione_status(self, notion_id: str, new_status: str) -> bool:
@@ -144,7 +203,7 @@ class NotionService:
         DEPRECATO: Usa update_formazione({'Stato': new_status}) invece.
         Mantenuto per backward compatibility.
         """
-        logger.warning("⚠️ DEPRECATED: update_formazione_status | Usa update_formazione invece")
+        logger.warning("DEPRECATED: update_formazione_status | Usa update_formazione invece")
         return await self.update_formazione(notion_id, {'Stato': new_status})
     
     async def update_codice_e_link(self, notion_id: str, codice: str, link_teams: str) -> bool:
@@ -154,7 +213,7 @@ class NotionService:
         DEPRECATO: Usa update_formazione({'Codice': codice, 'Link Teams': link_teams}) invece.
         Mantenuto per backward compatibility.
         """
-        logger.warning("⚠️ DEPRECATED: update_codice_e_link | Usa update_formazione invece")
+        logger.warning("DEPRECATED: update_codice_e_link | Usa update_formazione invece")
         return await self.update_formazione(notion_id, {
             'Codice': codice,
             'Link Teams': link_teams
@@ -194,8 +253,6 @@ class NotionService:
         
         NUOVA FUNZIONALITÀ abilitata dall'architettura modulare.
         """
-        logger.info(f"Query formazioni by area | Area: '{area}'")
-        
         try:
             query = self.query_builder.build_area_filter_query(
                 area=area,
@@ -205,11 +262,11 @@ class NotionService:
             response = self.client.get_client().databases.query(**query)
             formazioni = self.data_parser.parse_formazioni_list(response)
             
-            logger.info(f"✅ Formazioni recuperate | Area: '{area}' | Count: {len(formazioni)}")
+            logger.info(f"Formazioni recuperate | Area: '{area}' | Count: {len(formazioni)}")
             return formazioni
             
         except Exception as e:
-            logger.error(f"❌ Errore query formazioni | Area: '{area}' | Error: {e}")
+            logger.error(f"Errore query formazioni | Area: '{area}' | Error: {e}")
             raise NotionServiceError(f"Errore recupero per area: {e}")
     
     async def get_formazioni_by_status_and_area(self, status: str, area: str) -> List[Dict]:
@@ -218,8 +275,6 @@ class NotionService:
         
         NUOVA FUNZIONALITÀ per query complesse.
         """
-        logger.info(f"Query formazioni con filtri combinati | Status: '{status}' | Area: '{area}'")
-        
         try:
             query = self.query_builder.build_combined_filter_query(
                 status=status,
@@ -230,11 +285,11 @@ class NotionService:
             response = self.client.get_client().databases.query(**query)
             formazioni = self.data_parser.parse_formazioni_list(response)
             
-            logger.info(f"✅ Formazioni recuperate | Filtri combinati | Count: {len(formazioni)}")
+            logger.info(f"Formazioni recuperate | Filtri combinati | Count: {len(formazioni)}")
             return formazioni
             
         except Exception as e:
-            logger.error(f"❌ Errore query filtri combinati | Error: {e}")
+            logger.error(f"Errore query filtri combinati | Error: {e}")
             raise NotionServiceError(f"Errore recupero combinato: {e}")
     
     async def validate_database_structure(self) -> Dict:

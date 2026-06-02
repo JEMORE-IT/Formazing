@@ -23,10 +23,16 @@ class Config:
     
     # ===== FLASK CONFIG =====
     SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
-    BASIC_AUTH_USERNAME = os.getenv('FLASK_BASIC_AUTH_USERNAME', 'admin')
-    BASIC_AUTH_PASSWORD = os.getenv('FLASK_BASIC_AUTH_PASSWORD')
     FLASK_PORT = int(os.getenv('FLASK_PORT', 5000))
     DEBUG = os.getenv('DEBUG_MODE', 'False').lower() == 'true'
+
+    # ===== AUTH & RBAC CONFIG (Microsoft SSO) =====
+    ALLOWED_DOMAINS = os.getenv('ALLOWED_DOMAINS', 'jemore.it').split(',')
+    ADMIN_USERS = os.getenv('ADMIN_USERS', '').split(',')
+    MSAL_REDIRECT_URI = os.getenv('MSAL_REDIRECT_URI', f'http://localhost:{FLASK_PORT}/auth/callback')
+    # Authority URL per JEMORE (Single Tenant o Common)
+    MSAL_AUTHORITY = f"https://login.microsoftonline.com/{os.getenv('MICROSOFT_TENANT_ID', 'common')}"
+    MSAL_SCOPES = ["User.Read"]
     
     # ===== TELEGRAM CONFIG =====
     TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -172,10 +178,10 @@ class Config:
                     'level': cls.LOG_LEVEL,
                     'propagate': False
                 },
-                # Riduci verbosità librerie esterne
+                # Riduci verbosità librerie esterne per evitare spam di errori di rete
                 'telegram': {
                     'handlers': ['console', 'file'],
-                    'level': 'WARNING',
+                    'level': 'CRITICAL',
                     'propagate': False
                 },
                 'httpx': {
@@ -196,10 +202,10 @@ class Config:
         # Log messaggio di conferma configurazione
         logger = logging.getLogger(__name__)
         logger.info("=" * 80)
-        logger.info("🚀 Formazing Application - Logging configurato")
-        logger.info(f"📄 Log file: {cls.LOG_FILE} (max {cls.LOG_MAX_BYTES // (1024*1024)}MB, {cls.LOG_BACKUP_COUNT} backup)")
-        logger.info(f"📊 Log level: {cls.LOG_LEVEL}")
-        logger.info("🎨 Emoji servizi: 🗄️=Notion | 📧=Microsoft | 📱=Telegram | 🌐=Routes")
+        logger.info("[START] Formazing Application - Logging configurato")
+        logger.info(f"[LOGS] Log file: {cls.LOG_FILE} (max {cls.LOG_MAX_BYTES // (1024*1024)}MB, {cls.LOG_BACKUP_COUNT} backup)")
+        logger.info(f"Log level: {cls.LOG_LEVEL}")
+        logger.info("Servizi: Notion | Microsoft | Telegram | Routes")
         logger.info("=" * 80)
     
     @classmethod

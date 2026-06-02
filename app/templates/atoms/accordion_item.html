@@ -1,0 +1,16 @@
+<!-- ⚛️ ATOM: Accordion Item -->
+<div class="accordion-item border-0 mb-2 overflow-hidden" style="border-radius: 12px;">
+    <h2 class="accordion-header" id="heading{{ id }}">
+        <button class="accordion-button collapsed fw-bold text-blu-jemore" type="button" 
+                data-bs-toggle="collapse" data-bs-target="#collapse{{ id }}" 
+                aria-expanded="false" aria-controls="collapse{{ id }}">
+            {{ title }}
+        </button>
+    </h2>
+    <div id="collapse{{ id }}" class="accordion-collapse collapse" 
+         aria-labelledby="heading{{ id }}" data-bs-parent="#{{ parent_id }}">
+        <div class="accordion-body bg-white">
+            {{ content|safe }}
+        </div>
+    </div>
+</div>

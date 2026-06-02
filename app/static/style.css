@@ -1,256 +1,268 @@
-/* 🎨 Formazing Custom Styles */
+/* 🎨 Formazing JEMORE Utility-First Design System */
 
-/* === GLOBAL STYLES === */
+/* === 1. DESIGN TOKENS (Brand Colors) === */
 :root {
-    --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --warning-color: #ffc107;
-    --danger-color: #dc3545;
-    --info-color: #0dcaf0;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
+    --blu-jemore: hsl(233, 57%, 31%);
+    --bianco-latte: hsl(0, 60%, 98%);
+    --giallo-jemore: hsl(50, 100%, 51%);
+    
+    /* Text foregrounds */
+    --blu-jemore-fg: #ffffff;
+    --bianco-latte-fg: hsl(233, 57%, 15%);
+    --giallo-jemore-fg: #000000;
 }
 
+/* === 2. GLOBAL RESET & BASE === */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--blu-jemore);
+    color: white;
     line-height: 1.6;
-}
-
-/* === LOGIN PAGE === */
-.bg-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
 }
 
-.min-vh-100 {
-    min-height: 100vh !important;
-}
+/* === 3. UTILITY CLASSES (Tailwind-like) === */
 
-/* Cards with enhanced shadows */
-.card {
-    border-radius: 15px;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
+/* Backgrounds */
+.bg-blu-jemore { background-color: var(--blu-jemore) !important; }
+.bg-bianco-latte { background-color: var(--bianco-latte) !important; }
+.bg-giallo-jemore { background-color: var(--giallo-jemore) !important; }
+.bg-bianco-latte-fg { background-color: var(--bianco-latte-fg) !important; }
+.bg-white { background-color: #ffffff !important; }
+.bg-purple { background-color: #7a3df2 !important; color: #ffffff !important; }
+.bg-brown { background-color: #8a5a44 !important; color: #ffffff !important; }
+.bg-pink { background-color: #e83e8c !important; color: #ffffff !important; }
 
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-}
+/* Text Colors */
+.text-blu-jemore { color: var(--blu-jemore) !important; }
+.text-bianco-latte { color: var(--bianco-latte) !important; }
+.text-giallo-jemore { color: var(--giallo-jemore) !important; }
+.text-white { color: #ffffff !important; }
+.text-muted { color: #6c757d !important; }
 
-/* === DASHBOARD STATS === */
-.card .display-4 {
-    opacity: 0.8;
-}
+/* Shadows */
+.shadow-jemore { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important; }
+.shadow-lg-jemore { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important; }
 
-.card-body h3 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-}
+/* Radius */
+.rounded-jemore { border-radius: 16px !important; }
 
-/* === NAVIGATION === */
-.navbar-brand {
-    font-size: 1.5rem;
-}
+/* === 4. COMPONENTS === */
 
-.navbar-nav .nav-link {
-    border-radius: 8px;
-    margin: 0 4px;
-    transition: background-color 0.2s ease;
-}
-
-.navbar-nav .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
-}
-
-/* === TABLES === */
-.table {
-    background-color: white;
-    border-radius: 10px;
+/* Cards */
+.card-jemore {
+    background-color: var(--bianco-latte);
+    color: var(--bianco-latte-fg);
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
 }
 
-.table th {
-    border-top: none;
+.card-jemore-blu {
+    background-color: var(--blu-jemore);
+    color: white;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.card-header-jemore {
+    background-color: rgba(0, 0, 0, 0.03);
+    color: var(--blu-jemore);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-weight: 700;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+}
+
+/* Buttons */
+.btn-jemore-giallo, .btn-jemore-blu, .btn-jemore-dark-blu {
+    border-radius: 12px;
+    padding: 10px 28px;
     font-weight: 600;
-    color: #495057;
-    font-size: 0.9rem;
-    padding: 1rem 0.75rem;
+    transition: all 0.2s;
+    border: none;
 }
 
-.table td {
-    vertical-align: middle;
-    padding: 1rem 0.75rem;
-    border-top: 1px solid #f1f1f1;
+.btn-jemore-giallo {
+    background-color: var(--giallo-jemore) !important;
+    color: var(--giallo-jemore-fg) !important;
 }
 
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-/* === BADGES === */
-.badge {
-    font-size: 0.75rem;
-    padding: 0.4em 0.8em;
-    font-weight: 500;
-}
-
-/* Custom badge colors */
-.bg-purple {
-    background-color: #6f42c1 !important;
-    color: white !important;
-}
-
-.bg-pink {
-    background-color: #d63384 !important;
-    color: white !important;
-}
-
-.bg-brown {
-    background-color: #795548 !important;
-    color: white !important;
-}
-
-.text-bg-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-}
-
-.text-bg-dark {
-    background-color: #212529 !important;
-    color: white !important;
-}
-
-/* === BUTTONS === */
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
+.btn-jemore-giallo:hover {
+    background-color: #e6b800 !important;
     transform: translateY(-1px);
 }
 
-.btn-group-sm > .btn {
-    font-size: 0.8rem;
+.btn-jemore-blu {
+    background-color: var(--blu-jemore) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* === TABS === */
+.btn-jemore-dark-blu {
+    background-color: var(--bianco-latte-fg) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.btn-jemore-dark-blu:hover {
+    background-color: #0d122b !important; /* Slightly darker than base */
+    transform: translateY(-1px);
+}
+
+/* Navigation */
+.navbar-jemore {
+    background-color: var(--bianco-latte);
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-jemore .navbar-brand img {
+    max-height: 34px;
+    width: auto;
+    height: auto;
+}
+
+.nav-link-jemore {
+    color: var(--blu-jemore);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.nav-link-jemore:hover {
+    background-color: var(--blu-jemore);
+    color: white !important;
+}
+
+.navbar-toggler {
+    font-size: 1.5rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Responsive Utilities for Header */
+@media (min-width: 992px) {
+    .border-start-lg {
+        border-left: 1px solid currentColor !important;
+    }
+    .text-end-lg {
+        text-align: right !important;
+    }
+    .ps-lg-3 {
+        padding-left: 1rem !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .nav-link-jemore {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    .border-start-lg {
+        border-left: none !important;
+    }
+}
+
+/* Tabs Dashboard */
+.nav-tabs { border: none; }
 .nav-tabs .nav-link {
-    border-radius: 8px 8px 0 0;
-    border: 1px solid transparent;
-    color: #6c757d;
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    padding: 1rem 1.5rem;
+}
+/* .nav-tabs .nav-link.active { background: var(--blu-jemore-fg) !important; } */
+
+#programmata-tab.active { border-bottom-color: var(--giallo-jemore) !important; }
+#calendarizzata-tab.active { border-bottom-color: var(--blu-jemore) !important; }
+#conclusa-tab.active { border-bottom-color: var(--success) !important; }
+
+/* Accordion */
+.accordion-item {
+    background-color: white !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 1rem !important;
+    border-radius: 12px !important;
 }
 
-.nav-tabs .nav-link.active {
-    background-color: white;
-    border-color: #dee2e6 #dee2e6 white;
-    color: var(--primary-color);
+/* Badges & Utilities */
+.extra-small {
+    font-size: 0.7rem !important;
+    letter-spacing: 0.5px;
 }
 
-.nav-tabs .nav-link:hover {
-    border-color: #e9ecef #e9ecef white;
-    color: var(--primary-color);
+.badge-jemore {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
 }
 
-/* === ALERTS === */
-.alert {
-    border: none;
-    border-radius: 10px;
-    font-weight: 500;
+.badge-programmata {
+    background-color: var(--giallo-jemore) !important;
+    color: var(--giallo-jemore-fg) !important;
 }
 
-.alert i {
-    margin-right: 8px;
+.badge-calendarizzata {
+    background-color: var(--blu-jemore) !important;
+    color: white !important;
 }
 
-/* === MODALS === */
-.modal-content {
-    border-radius: 15px;
-    border: none;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+.badge-conclusa, .badge-concluse {
+    background-color: #198754 !important; /* success color */
+    color: white !important;
 }
 
-.modal-header {
-    border-bottom: 1px solid #f1f1f1;
-    border-radius: 15px 15px 0 0;
+.btn-jemore-verde {
+    background-color: #198754 !important;
+    color: white !important;
+    border-radius: 12px;
+    padding: 10px 28px;
+    font-weight: 600;
 }
 
-.modal-footer {
-    border-top: 1px solid #f1f1f1;
-    border-radius: 0 0 15px 15px;
+.border-blu-jemore {
+    border-left: 5px solid var(--blu-jemore) !important;}
+
+.border-giallo-jemore {
+    border-left: 5px solid var(--giallo-jemore) !important;
 }
 
-/* === ANIMATIONS === */
+/* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.card, .alert {
-    animation: fadeIn 0.3s ease-out;
-}
+.card, .alert { animation: fadeIn 0.4s ease-out both; }
 
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-    }
-    
-    .card-body {
-        padding: 2rem 1.5rem;
-    }
-    
-    .table-responsive {
-        font-size: 0.9rem;
-    }
-    
-    .btn-group-sm > .btn {
-        font-size: 0.7rem;
-        padding: 0.25rem 0.5rem;
-    }
-}
-
-/* === UTILITY CLASSES === */
-.text-monospace {
-    font-family: 'Courier New', monospace !important;
-}
-
-.shadow-sm {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
-}
-
-.border-0 {
+/* Toast Custom Styling */
+.toast {
+    border-radius: 16px !important;
     border: none !important;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* === STATUS INDICATORS === */
-.status-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 8px;
+.toast-header {
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+    padding: 0.6rem 1rem;
 }
 
-.status-programmata { background-color: var(--warning-color); }
-.status-calendarizzata { background-color: var(--info-color); }
-.status-conclusa { background-color: var(--success-color); }
-
-/* === LOADING STATES === */
-.spinner-border {
-    animation: spinner-border 0.75s linear infinite;
-}
-
-@keyframes spinner-border {
-    to { transform: rotate(360deg); }
-}
-
-/* === DARK MODE SUPPORT (future enhancement) === */
-@media (prefers-color-scheme: dark) {
-    /* Dark mode styles would go here */
+.toast-body {
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+    padding: 0.8rem 1rem;
 }

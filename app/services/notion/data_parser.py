@@ -51,7 +51,7 @@ class NotionDataParser:
             if formazione:  # Filtra righe malformate
                 formazioni.append(formazione)
         
-        logger.info(f"✅ Parsing completato | Formazioni valide: {len(formazioni)}/{len(notion_response.get('results', []))}")
+        logger.info(f"Parsing completato | Formazioni valide: {len(formazioni)}/{len(notion_response.get('results', []))}")
         return formazioni
     
     def parse_single_formazione(self, page: Dict) -> Optional[Dict]:
@@ -86,7 +86,7 @@ class NotionDataParser:
             
             # Validazione campi critici
             if not all([nome, area_list, data_ora, status, notion_id]):
-                logger.warning(f"⚠️ Formazione incompleta")
+                logger.debug(f"Formazione incompleta (ID: {notion_id[:8] if notion_id else 'N/A'})")
                 # Stampa dettagli per debug
                 for field, value in {
                     'ID': notion_id,
@@ -96,7 +96,7 @@ class NotionDataParser:
                     'Stato': status
                 }.items():
                     if not value:
-                        logger.warning(f"  - Mancante: {field}") 
+                        logger.debug(f"- Mancante: {field}") 
                 
                 return None
             
@@ -122,7 +122,7 @@ class NotionDataParser:
             return formazione
             
         except Exception as e:
-            logger.error(f"❌ Errore parsing formazione | ID: {page.get('id', 'unknown')[:8]} | Error: {e}")
+            logger.error(f"Errore parsing formazione | ID: {page.get('id', 'unknown')[:8]} | Error: {e}")
             return None
     
     # ===============================
@@ -262,5 +262,5 @@ class NotionDataParser:
             return formatted_date
             
         except Exception as e:
-            logger.warning(f"⚠️ Errore parsing data | Input: '{start_date}' | Error: {e}")
+            logger.warning(f"Errore parsing data | Input: '{start_date}' | Error: {e}")
             return start_date  # Fallback a stringa originale

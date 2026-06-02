@@ -1,25 +1,56 @@
-<!-- 🧩 MOLECULE: Email section card for notifications -->
+<!-- 🧩 MOLECULE: Email section card for notifications (Split-View Editor) -->
 {% macro email_section_card(email) %}
 {% if email %}
-<div class="card">
-    <div class="card-header bg-success text-white">
-        <i class="bi bi-envelope me-2"></i>Email da Inviare
+<div class="card-jemore shadow-sm">
+    <div class="card-header-jemore">
+        <i class="bi bi-envelope me-2 text-blu-jemore"></i> Email di Convocazione
     </div>
-    <div class="card-body">
-        <div class="mb-3">
-            <strong class="d-block mb-1">Destinatari:</strong>
-            <span class="text-muted">{{ email.attendee_emails|join(', ') }}</span>
+    <div class="card-body p-0">
+        <!-- Info Header -->
+        <div class="p-3 border-bottom bg-light">
+            <div class="mb-2">
+                <strong class="small text-muted me-2">Destinatari:</strong>
+                <span class="small text-dark">{{ email.attendee_emails|join(', ') }}</span>
+            </div>
+            <div>
+                <strong class="small text-muted me-2">Oggetto:</strong>
+                <span class="small text-dark fw-bold">{{ email.subject }}</span>
+            </div>
         </div>
-        
-        <div class="mb-3">
-            <strong class="d-block mb-1">Oggetto:</strong>
-            <span class="text-muted">{{ email.subject }}</span>
-        </div>
-        
-        <div class="mb-0">
-            <strong class="d-block mb-2">Anteprima:</strong>
-            <div class="border rounded p-3 bg-light" style="max-height: 400px; overflow-y: auto; font-size: 0.9rem; line-height: 1.6;">
-                {{ email.body_preview | safe }}
+
+        <div class="row g-0">
+            <!-- Editor Column -->
+            <div class="col-lg-6 border-end p-3">
+                <label class="form-label small fw-bold text-muted mb-2">Editor - HTML</label>
+                <textarea class="preview-editor-textarea email-editor-js" 
+                          rows="15"
+                          name="email_body">{{ email.body_preview }}</textarea>
+                <div class="mt-2 extra-small text-muted">
+                    <i class="bi bi-info-circle me-1"></i> Puoi modificare il testo HTML qui sopra.
+                </div>
+            </div>
+            
+            <!-- Mockup Column -->
+            <div class="col-lg-6 p-3 bg-light">
+                <label class="form-label small fw-bold text-muted mb-2">Anteprima</label>
+                <div class="email-mockup shadow-sm">
+                    <div class="email-header">
+                        <div class="email-header-item"><strong>Da:</strong> Responsabile Formazioni JEMORE</div>
+                        <div class="email-header-item">
+                            <strong>A:</strong> 
+                            {% if email.attendee_emails|length == 1 %}
+                                {{ email.attendee_emails[0] }}
+                            {% else %}
+                                {{ email.attendee_emails|join(', ') }}
+                            {% endif %}
+                        </div>
+                        <div class="email-header-item"><strong>Oggetto:</strong> {{ email.subject }}</div>
+                    </div>
+                    <div class="email-body-container" id="email-preview-body">
+                        <!-- Caricato dinamicamente via JS -->
+                        {{ email.body_preview | safe }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>

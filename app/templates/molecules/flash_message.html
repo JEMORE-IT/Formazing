@@ -1,23 +1,22 @@
-<!-- 🧩 MOLECULE: Flash Message -->
+<!-- 🧩 MOLECULE: Flash Message (Toast) -->
 {% set message_configs = {
-    'error': {'bg': 'alert-danger', 'icon': 'bi bi-exclamation-triangle'},
-    'success': {'bg': 'alert-success', 'icon': 'bi bi-check-circle'},
-    'warning': {'bg': 'alert-warning', 'icon': 'bi bi-exclamation-triangle'},
-    'info': {'bg': 'alert-info', 'icon': 'bi bi-info-circle'}
+    'error': {'bg': 'text-bg-danger', 'icon': 'bi bi-exclamation-octagon-fill', 'title': 'Errore'},
+    'success': {'bg': 'text-bg-success', 'icon': 'bi bi-check-circle-fill', 'title': 'Successo'},
+    'warning': {'bg': 'bg-giallo-jemore text-giallo-jemore-fg', 'icon': 'bi bi-exclamation-triangle-fill', 'title': 'Attenzione'},
+    'info': {'bg': 'bg-bianco-latte-fg text-bianco-latte', 'icon': 'bi bi-info-circle-fill', 'title': 'Info'}
 } %}
 
 {% set config = message_configs[category] if category in message_configs else message_configs['info'] %}
 
-<div class="alert {{ config.bg }} alert-dismissible fade show" role="alert">
-    {% set name = config.icon %}
-    {% set size = 'me-2' %}
-    {% include 'atoms/icon.html' %}
-    
-    {{ message }}
-    
-    {% set type = 'button' %}
-    {% set variant = 'btn-close' %}
-    {% set data_bs_dismiss = 'alert' %}
-    {% set aria_label = 'Close' %}
-    {% include 'atoms/button.html' %}
+<div class="toast show mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+    <div class="toast-header {{ config.bg }} border-0 py-2">
+        {% set name = config.icon %}
+        {% set size = 'me-2' %}
+        {% include 'atoms/icon.html' %}
+        <strong class="me-auto">{{ config.title }}</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body bg-bianco-latte text-blu-jemore fw-medium">
+        {{ message }}
+    </div>
 </div>

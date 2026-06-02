@@ -1,0 +1,58 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container-fluid d-flex flex-column align-items-center justify-content-center bg-blu-jemore text-bianco-latte vh-100 overflow-hidden">
+    <div class="text-center d-flex flex-column align-items-center gap-4">
+        
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo_jemore.png') }}" 
+                 alt="JEMORE" 
+                 class="img-fluid step-spin-animation" 
+                 style="max-height: 120px; width: auto;">
+        </div>
+        
+        <div class="loading-content">
+            <h2 class="h3 fw-bold">{{ loading_title }}</h2>
+            <p class="text-white-50 lead">{{ loading_message }}</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    header, footer { display: none !important; }
+    
+    /* Forza il body a non scrollare mai */
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden; /* Blocca lo scroll a livello di pagina */
+    }
+
+    .logo-container {
+        perspective: 1000px;
+    }
+
+    .step-spin-animation {
+        animation: step-spin 2.5s ease-in-out infinite;
+    }
+
+    @keyframes step-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    #loadingOverlay { display: none !important; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const nextUrl = "{{ next_url|safe }}";
+        
+        // Un piccolo delay per far apprezzare l'animazione e non far sembrare lo scatto troppo brusco
+        setTimeout(() => {
+            // Usiamo replace per non sporcare la history
+            window.location.replace(nextUrl);
+        }, 800);
+    });
+</script>
+{% endblock %}

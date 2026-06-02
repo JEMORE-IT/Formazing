@@ -10,13 +10,13 @@ Configurazione centralizzata dell'applicazione Flask con:
 - Logging configurato
 """
 
-from flask import Flask
-from flask_httpauth import HTTPBasicAuth
+from flask import Flask, session
+from flask_caching import Cache
 from config import Config
 import logging
 
-# Inizializza l'autenticazione Basic HTTP
-auth = HTTPBasicAuth()
+# Inizializza il sistema di Caching
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 600})
 
 # Logger per app factory
 logger = logging.getLogger(__name__)
@@ -30,35 +30,42 @@ def create_app():
     """
     # Configura logging PRIMA di tutto (setup centralizzato)
     Config.setup_logging()
-    logger.info("🏗️ Inizializzazione Flask app Formazing...")
+    logger.info("Inizializzazione Flask app Formazing...")
     
     # Crea l'app Flask
     app = Flask(__name__)
     
     # Carica configurazione
     app.config.from_object(Config)
-    logger.info(f"✅ Configurazione Flask caricata (DEBUG={Config.DEBUG})")
     
-    # Registra il sistema di autenticazione
-    @auth.verify_password
-    def verify_password(username, password):
-        """Verifica credenziali Basic Auth."""
-        return (username == Config.BASIC_AUTH_USERNAME and 
-                password == Config.BASIC_AUTH_PASSWORD)
+    # Inizializza la cache con l'app
+    cache.init_app(app)
     
-    logger.info("🔐 Basic Authentication configurata")
-    
-    # Registra le routes
+    # --- CONTEXT PROCESSOR GLOBALE ---
+    @app.context_processor
+    def inject_user_data():
+        """Rende i dati utente disponibili in tutti i template Jinja."""
+        user = session.get('user')
+        return {
+            'current_user': user,
+            'is_admin': session.get('is_admin', False),
+            'app_name': 'Formazing'
+        }
+
+    # Registra le rotte (Blueprint principale)
     from app.routes import main
     app.register_blueprint(main)
-    logger.info("🛤️ Routes registrate (Blueprint 'main')")
+    logger.info("Routes registrate (Blueprint 'main')")
     
-    # 🎯 Inizializza TrainingService Singleton all'avvio
-    # Questo garantisce che il bot Telegram sia online PRIMA di gestire richieste
-    logger.info("🎯 Inizializzazione TrainingService Singleton...")
+    # 🎯 Inizializza Servizi Singleton all'avvio
+    logger.info("Inizializzazione Servizi Singleton...")
+    
+    from app.services.auth_sso import AuthService
+    AuthService.get_instance()
+    
     from app.services.training_service import TrainingService
     training_service = TrainingService.get_instance()
-    logger.info("✅ TrainingService pronto (bot Telegram configurato)")
+    logger.info("TrainingService pronto (bot Telegram configurato)")
     
     # ✨ Filtri Jinja2 personalizzati
     @app.template_filter('format_area')
@@ -79,21 +86,50 @@ def create_app():
         else:
             return 'N/A'
     
-    logger.info("✨ Filtri Jinja2 personalizzati registrati")
+    @app.template_filter('area_color')
+    def area_color_filter(area):
+        """
+        Ritorna la classe colore CSS associata all'area.
+        """
+        if not area or area == 'N/A':
+            return 'bg-secondary'
+            
+        area_upper = area.upper()
+        
+        if 'IT' in area_upper:
+            return 'bg-primary'
+        if 'R&D' in area_upper:
+            return 'bg-danger'
+        if 'MARKETING' in area_upper:
+            return 'bg-purple'
+        if 'COMMERCIALE' in area_upper or 'SALES' in area_upper:
+            return 'text-bg-warning'
+        if 'LEGAL' in area_upper or 'LEGALE' in area_upper:
+            return 'bg-brown'
+        if 'HR' in area_upper:
+            return 'bg-success'
+        if 'ALL' in area_upper or 'TUTTI' in area_upper:
+            return 'bg-pink'
+        if 'TEST' in area_upper:
+            return 'bg-info'
+            
+        return 'bg-secondary'
+    
+    logger.info("Filtri Jinja2 personalizzati registrati")
     
     # Error handlers
     @app.errorhandler(404)
     def not_found_error(error):
         from flask import request
-        logger.warning(f"❌ 404 - Risorsa non trovata: {request.path}")
+        logger.warning(f"404 - Risorsa non trovata: {request.path}")
         return {'error': 'Risorsa non trovata'}, 404
     
     @app.errorhandler(500) 
     def internal_error(error):
-        logger.error(f"❌ 500 - Errore interno: {error}")
+        logger.error(f"500 - Errore interno: {error}")
         return {'error': 'Errore interno del server'}, 500
     
-    logger.info("🔧 Error handlers configurati")
-    logger.info("🎉 Flask app creata con successo e pronta all'uso")
+    logger.info("Error handlers configurati")
+    logger.info("Flask app creata con successo e pronta all'uso")
     
     return app

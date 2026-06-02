@@ -1,13 +1,13 @@
 <!-- 🧩 MOLECULE: Training information card -->
 {% macro training_info_card(training, action_type, codice_generato=None) %}
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <i class="bi bi-info-circle me-2"></i>Informazioni Formazione
+<div class="card-jemore shadow-sm">
+    <div class="card-header-jemore">
+        <i class="bi bi-info-circle me-2 text-blu-jemore"></i> Informazioni Formazione
     </div>
-    <div class="card-body">
-        <dl class="row mb-0">
+    <div class="card-body p-4">
+        <dl class="row mb-0" id="vital-data-container">
             <dt class="col-sm-3">Nome:</dt>
-            <dd class="col-sm-9 fw-bold">{{ training.Nome }}</dd>
+            <dd class="col-sm-9 fw-bold text-blu-jemore" data-vital-field="nome">{{ training.Nome }}</dd>
             
             <dt class="col-sm-3">Area:</dt>
             <dd class="col-sm-9">
@@ -15,7 +15,9 @@
                     <div class="d-flex flex-wrap gap-1">
                         {% for area in training.Area %}
                             {% set text = area %}
-                            {% set color = 'bg-secondary' %}
+                            {% set color = area | area_color %}
+                            {% set size = 'extra-small' %}
+                            <span data-vital-field="area-{{ loop.index0 }}" class="d-none">{{ area }}</span>
                             {% include 'atoms/badge.html' %}
                         {% endfor %}
                     </div>
@@ -25,48 +27,48 @@
             </dd>
             
             <dt class="col-sm-3">Data:</dt>
-            <dd class="col-sm-9">
-                {{ training['Data/Ora'] if training['Data/Ora'] else '<span class="text-muted">N/A</span>' | safe }}
+            <dd class="col-sm-9" data-vital-field="data">
+                {{ training['Data/Ora'] if training['Data/Ora'] else 'N/A' }}
             </dd>
-            
             <dt class="col-sm-3">Stato Attuale:</dt>
             <dd class="col-sm-9">
                 {% if training.Stato == 'Programmata' %}
                     {% set text = 'Programmata' %}
-                    {% set color = 'bg-warning' %}
-                    {% include 'atoms/badge.html' %}
+                    {% set color = 'badge-programmata' %}
                 {% elif training.Stato == 'Calendarizzata' %}
                     {% set text = 'Calendarizzata' %}
-                    {% set color = 'bg-info' %}
-                    {% include 'atoms/badge.html' %}
+                    {% set color = 'badge-calendarizzata' %}
                 {% else %}
                     {% set text = 'Conclusa' %}
                     {% set color = 'bg-success' %}
-                    {% include 'atoms/badge.html' %}
                 {% endif %}
+                {% set size = 'extra-small' %}
+                {% include 'atoms/badge.html' %}
             </dd>
-            
+
+            {# Mostriamo il Link Teams se presente, indipendentemente dal tipo di azione #}
+            {% if training['Link Teams'] %}
+            <dt class="col-sm-3">Link Teams:</dt>
+            <dd class="col-sm-9">
+                <a href="{{ training['Link Teams'] }}" 
+                   id="vital-link-teams"
+                   target="_blank" 
+                   class="btn btn-sm btn-jemore-blu"
+                   data-vital-field="link-teams">
+                    <i class="bi bi-microsoft-teams me-1"></i> Vai al meeting
+                </a>
+            </dd>
+            {% endif %}
+
             {% if action_type == 'notification' %}
                 <dt class="col-sm-3">Nuovo Codice:</dt>
                 <dd class="col-sm-9">
-                    <code class="user-select-all">{{ codice_generato }}</code>
+                    <code class="user-select-all px-2 py-1 bg-light rounded text-danger fw-bold border" data-vital-field="codice">{{ codice_generato }}</code>
                 </dd>
-                
-                {% if training.LinkTeams %}
-                <dt class="col-sm-3">Link Teams:</dt>
-                <dd class="col-sm-9">
-                    <a href="{{ training.LinkTeams }}" 
-                       target="_blank" 
-                       class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-microsoft-teams"></i> Vai al meeting
-                    </a>
-                </dd>
-                {% endif %}
-            
             {% elif training.Codice %}
                 <dt class="col-sm-3">Codice:</dt>
                 <dd class="col-sm-9">
-                    <code class="user-select-all">{{ training.Codice }}</code>
+                    <code class="user-select-all px-2 py-1 bg-light rounded border" data-vital-field="codice">{{ training.Codice }}</code>
                 </dd>
             {% endif %}
         </dl>

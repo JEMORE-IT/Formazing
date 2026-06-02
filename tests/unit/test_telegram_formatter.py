@@ -48,42 +48,24 @@ class TestTelegramFormatter:
         il comportamento effettivo del sistema.
         
         Args:
-            real_templates: Fixture con template caricati da YAML
+            real_templates: Fixture con i template YAML caricati
             
         Returns:
-            TelegramFormatter: Istanza configurata per testing
+            TelegramFormatter: Istanza pronta per il test
         """
         return TelegramFormatter(real_templates)
-    
-    @pytest.fixture
-    def minimal_training_data(self):
-        """
-        Dati training con campi minimi per testare gestione errori.
-        
-        Contiene solo i campi essenziali (Nome, Area) mentre omette
-        intenzionalmente altri campi per verificare che il formatter
-        gestisca correttamente i valori mancanti con fallback 'N/A'.
-        
-        Returns:
-            dict: Dati training minimali per edge case testing
-        """
-        return {
-            'Nome': 'Basic Course',
-            'Area': 'HR'
-            # Altri campi mancanti intenzionalmente per testare fallback N/A
-        }
-    
+
     # ================================
     # TEST format_training_message
     # ================================
-    
+
     def test_format_training_message_main_group_complete_data(self, formatter, sample_training_data):
         """
         Test formattazione messaggio training per gruppo principale.
         
         Verifica che:
         - Tutti i campi dei dati vengano inseriti correttamente nel template
-        - Il template main_group venga selezionato (con marker [TEST])
+        - Il template main_group venga selezionato
         - Non rimangano placeholder non risolti nel messaggio finale
         - La struttura HTML sia corretta per Telegram
         
@@ -98,10 +80,10 @@ class TestTelegramFormatter:
         assert sample_training_data['Codice'] in result
         assert sample_training_data['Link Teams'] in result
         
-        # Verifiche template structure reale
-        assert '🚀' in result and '[TEST]' in result  # Template reale
+        # Verifiche template structure reale (ora con 🎉 invece di 🚀)
+        assert '🎉' in result 
         assert '<a href=' in result
-        assert 'Nuova formazione programmata!' in result  # Dal template reale
+        assert 'Formazione per i soci' in result
         
         # Verifica non ci siano placeholder non risolti
         assert '{' not in result
@@ -114,7 +96,6 @@ class TestTelegramFormatter:
         Verifica che:
         - Venga utilizzato il template area_group (diverso dal main_group)
         - Il messaggio sia personalizzato per l'area specifica
-        - Non contenga marker specifici del main_group (come [TEST])
         - Mantenga la struttura HTML appropriata per Telegram
         
         Importante: Questo test dimostra la logica di template selection.
@@ -123,17 +104,14 @@ class TestTelegramFormatter:
         
         # Verifiche presenza campi da fixture conftest.py
         assert sample_training_data['Nome'] in result
-        assert sample_training_data['Area'] in result
         assert sample_training_data['Data/Ora'] in result
         
-        # Verifiche template specifico area_group (dal template reale)
-        assert f"🎉 <b>Formazione per {sample_training_data['Area']}!</b>" in result
+        # Verifiche template specifico area_group (dal template reale usa 🚀)
+        assert '🚀' in result
+        assert 'Nuova formazione programmata!' in result
         assert 'Partecipa qui</a>' in result
-        
-        # Verifica differenza da main_group template
-        assert '[TEST]' not in result  # Solo main_group ha [TEST] nel template reale
     
-    def test_format_training_message_missing_fields(self, formatter, minimal_training_data):
+    def test_format_training_message_missing_fields(self, formatter):
         """
         Test gestione robusta di dati incompleti con fallback automatici.
         
@@ -144,10 +122,12 @@ class TestTelegramFormatter:
         - I campi mancanti vengano sostituiti con 'N/A'
         - Il template venga completato senza errori
         - Non rimangano placeholder irrisolti
-        
-        Questo test è cruciale per la robustezza in ambiente reale dove
-        i dati potrebbero essere incompleti.
         """
+        minimal_training_data = {
+            'Nome': 'Basic Course',
+            'Area': 'HR'
+        }
+        
         result = formatter.format_training_message(minimal_training_data, 'main_group')
         
         # Campi presenti
@@ -158,7 +138,7 @@ class TestTelegramFormatter:
         assert 'N/A' in result  # Deve apparire per campi mancanti
         
         # Template deve essere completato comunque
-        assert result.startswith('🚀 <b>[TEST]')
+        assert result.startswith('🎉 <b>')
         assert '{' not in result  # No placeholder irrisolti
     
     def test_format_training_message_template_not_found(self, sample_training_data):
@@ -222,7 +202,7 @@ class TestTelegramFormatter:
         Test formattazione messaggio richiesta feedback con dati completi.
         
         Verifica che:
-        - Tutti i campi training (Nome, Area, Codice) appaiano nel messaggio
+        - Tutti i campi training (Nome, Codice) appaiano nel messaggio
         - Il link feedback sia correttamente integrato come link cliccabile
         - Il template reale produca la struttura HTML attesa per Telegram
         - Non rimangano placeholder irrisolti nel messaggio finale
@@ -235,7 +215,6 @@ class TestTelegramFormatter:
         
         # Verifiche presenza campi da fixture conftest.py
         assert sample_training_data['Nome'] in result
-        assert sample_training_data['Area'] in result
         assert sample_training_data['Codice'] in result
         assert feedback_link in result
         
@@ -248,7 +227,7 @@ class TestTelegramFormatter:
         assert '{' not in result
         assert '}' not in result
     
-    def test_format_feedback_message_missing_fields(self, formatter, minimal_training_data):
+    def test_format_feedback_message_missing_fields(self, formatter):
         """
         Test robustezza formattazione feedback con dati incompleti.
         
@@ -259,20 +238,20 @@ class TestTelegramFormatter:
         - I campi mancanti vengano sostituiti con fallback 'N/A'
         - Il template feedback venga completato senza errori
         - Il link feedback rimanga sempre funzionante
-        
-        Questo test simula situazioni reali dove i dati potrebbero
-        essere inseriti in modo incompleto in Notion.
         """
+        minimal_training_data = {
+            'Nome': 'Basic Course',
+            'Area': 'HR'
+        }
         feedback_link = 'https://forms.office.com/r/test'
         
         result = formatter.format_feedback_message(minimal_training_data, feedback_link, 'HR')
         
         # Campi presenti
         assert 'Basic Course' in result
-        assert 'HR' in result
         assert feedback_link in result
         
-        # Campi mancanti → N/A
+        # Campi mancanti → N/A (Codice è nel template, ma Area NO)
         assert 'N/A' in result
         
         # Template completato
@@ -403,7 +382,7 @@ class TestTelegramFormatter:
         - Non ci siano tentativi di parsing su valori null
         - L'output sia user-friendly per campi mancanti
         
-        Comune in database dove alcuni campi data
+        Comune in database opera dove alcuni campi data
         possono essere non disponibili o non applicabili.
         """
         result = formatter._format_date_time('N/A')
@@ -466,18 +445,13 @@ class TestTelegramFormatter:
         
         Verifica che:
         - Venga selezionato il template specifico per main_group
-        - Il contenuto includa il marker [TEST] identificativo
-        - Il messaggio abbia il tone generale per tutti i dipendenti
-        
-        Il main_group riceve notifiche generali di formazione
-        valide per tutta l'organizzazione.
+        - Il messaggio abbia il tone generale per tutti i soci
         """
         result = formatter.format_training_message(sample_training_data, 'main_group')
         
-        # Deve usare template main_group (dal template reale ha [TEST])
-        assert '[TEST]' in result
-        assert 'Nuova formazione programmata!' in result  # Specifico del main_group
-        assert f'Formazione per {sample_training_data["Area"]}!' not in result  # Questo è da area_group
+        # Deve usare template main_group (dal template reale usa 🎉)
+        assert '🎉' in result
+        assert 'Formazione per i soci' in result
     
     def test_template_selection_area_group(self, formatter, sample_training_data):
         """
@@ -488,18 +462,13 @@ class TestTelegramFormatter:
         
         Verifica che:
         - Venga utilizzato il template specializzato per area
-        - Il messaggio includa riferimenti specifici all'area
         - Il contenuto sia personalizzato per il target gruppo
-        
-        Gli area_group ricevono notifiche mirate
-        per formazioni specifiche del loro settore.
         """  
         result = formatter.format_training_message(sample_training_data, 'area_group')
         
-        # Deve usare template area_group (dal template reale)
-        assert f'Formazione per {sample_training_data["Area"]}!' in result
-        assert '[TEST]' not in result  # Questo è solo da main_group
-        assert 'Nuova formazione programmata!' not in result  # Questo è solo da main_group
+        # Deve usare template area_group (dal template reale usa 🚀)
+        assert '🚀' in result
+        assert 'Nuova formazione programmata!' in result
     
     def test_template_selection_unknown_group(self, formatter, sample_training_data):
         """
@@ -512,14 +481,12 @@ class TestTelegramFormatter:
         - Il sistema non crashi per gruppi non riconosciuti
         - Venga applicato automaticamente il fallback (area_group)
         - Il messaggio risultante sia funzionale e leggibile
-        
-        Importante per robustezza quando vengono aggiunti
-        nuovi gruppi prima di configurare i template.
         """
         result = formatter.format_training_message(sample_training_data, 'unknown_group')
         
         # Deve usare template area_group come fallback
-        assert f'Formazione per {sample_training_data["Area"]}!' in result
+        assert '🚀' in result
+        assert 'Nuova formazione programmata!' in result
     
     # ================================
     # TEST Integration con fixture reali
@@ -534,9 +501,6 @@ class TestTelegramFormatter:
         - Contenga tutti i campi richiesti dal sistema
         - Abbia data dinamica basata su 'oggi' (sempre valida)
         - Dimostri il corretto riutilizzo delle fixture condivise
-        
-        Questo test valida l'architettura DRY delle fixture e garantisce
-        che gli unit test siano sincronizzati con le configurazioni centrali.
         """
         # Usa fixture reale da conftest.py
         assert 'Nome' in sample_training_data
@@ -558,19 +522,11 @@ class TestTelegramFormatter:
         - I dati alternativi vengano processati correttamente
         - Il template area_group sia selezionato appropriatamente
         - Il contenuto includa dettagli specifici per l'area HR
-        - La fixture alternative fornisca varietà nei test
-        
-        Questo test dimostra la flessibilità del sistema
-        di fixture e la corretta gestione di diverse aree aziendali.
         """
         result = formatter.format_training_message(alternative_training_data, 'area_group')
         
         # Deve contenere elementi del template reale con dati HR
         assert alternative_training_data['Nome'] in result
         assert alternative_training_data['Area'] in result  # HR
-        assert f'Formazione per {alternative_training_data["Area"]}!' in result
+        assert '🚀' in result
         assert 'Partecipa qui</a>' in result  # Marker specifico del template area_group
-        
-        # Verifica che usi template area_group (non main_group)
-        assert '[TEST]' not in result  # Solo main_group ha [TEST]
-        assert 'dati mock!' not in result  # Solo main_group ha questo marker

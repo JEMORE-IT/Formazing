@@ -70,19 +70,19 @@ class TestNotionQueryBuilder:
     
     def test_build_status_filter_query_conclusa(self, query_builder, sample_database_id):
         """
-        Test costruzione query per status 'Conclusa'.
+        Test costruzione query per status 'Conclusa' con ordinamento decrescente.
         
         Verifica che:
-        - Status finali siano gestiti correttamente
-        - Query structure sia identica per tutti gli status
-        - Performance ottimale con ordinamento
+        - Status finali siano gestiti correttamente con i più recenti prima (descending)
+        - Query structure sia valida per API Notion
+        - Ordinamento rifletta la modifica recente in query_builder.py
         
-        Utile per report e statistiche formazioni completate.
+        Utile per dashboard: mostra formazioni appena concluse in cima alla lista.
         """
         result = query_builder.build_status_filter_query("Conclusa", sample_database_id)
         
         assert result["filter"]["status"]["equals"] == "Conclusa"
-        assert result["sorts"][0]["direction"] == "ascending"
+        assert result["sorts"][0]["direction"] == "descending"
     
     # ===== TEST BUILD DATE RANGE FILTER QUERY =====
     

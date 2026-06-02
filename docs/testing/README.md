@@ -188,18 +188,22 @@ python tests/e2e/test_workflow.py --limit 3
 - **Aggiorna stato** → "Calendarizzata" (solo in memoria, non salva)
 - **Report completo** con metriche performance e risultati
 
-**`all`** - Suite Completa Pre-Commit (Nuovo!)
+**`all`** - Suite Completa Pre-Commit (Sincronizzata!)
 ```bash
-# Comando quick_test
+# Comando quick_test (Windows)
 .\quick_test.bat all
+
+# Comando quick_test (Linux/macOS)
+./quick_test.sh all
 
 # Equivalente: 4 comandi in sequenza interattiva
 ```
-**Cosa fa**: Suite **interattiva step-by-step** per validazione pre-commit:
-- **Step 1**: Test unitari (106 test, 1.2s) con conferma
-- **Step 2**: Verifica connessioni Notion + Telegram con conferma  
-- **Step 3**: Test formattazione template con dati reali con conferma
-- **Step 4**: Workflow simulazione completa con conferma
+**Cosa fa**: Suite **interattiva step-by-step** per validazione pre-commit, ora disponibile su tutte le piattaforme:
+- **Step 1**: Test unitari (106 test, 1.2s) con conferma (INVIO)
+- **Step 2**: Verifica connessioni Notion + Telegram con conferma (INVIO)
+- **Step 3**: Test formattazione template con dati reali con conferma (INVIO)
+- **Step 4**: Workflow simulazione completa con conferma (INVIO)
+- **Nessun timeout**: Il passaggio tra gli step è immediato dopo la tua conferma.
 - **Report finale** con riepilogo test eseguiti
 
 ---

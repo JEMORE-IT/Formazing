@@ -49,8 +49,8 @@ An app as simple as a button that:
 
 * **SPRING/AUTUMN**: Periodic training sessions (Spring/Autumn).
 * **ONCE**: Internal one-off training sessions.
-* **EXT**: Training received from external sources (other JEs, companies, professors).
-* **OUT**: Training provided externally (for other JEs or the university).
+* **EXT**: Training WE RECEIVE FROM THE OUTSIDE (e.g., from companies, professionals, or other JEs) to develop new skills.
+* **OUT**: Training WE PROVIDE TO THE OUTSIDE (e.g., upon request by other JEs or universities).
 
 ---
 

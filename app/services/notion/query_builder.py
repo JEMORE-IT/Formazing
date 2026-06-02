@@ -66,7 +66,7 @@ class NotionQueryBuilder:
             "sorts": [
                 {
                     "property": "Date",
-                    "direction": "ascending"
+                    "direction": "descending" if status == "Conclusa" else "ascending"
                 }
             ],
             "page_size": self.default_page_size
@@ -201,6 +201,35 @@ class NotionQueryBuilder:
         
         return query
     
+    def build_all_records_query(self, database_id: str, next_cursor: str = None) -> Dict:
+        """
+        Costruisce query globale senza filtri per recuperare tutto il database.
+        
+        Args:
+            database_id: ID database target
+            next_cursor: Cursore per la paginazione Notion
+        
+        Returns:
+            Dict: Query strutturata per API Notion
+        """
+        logger.debug(f"Costruisco query globale per database: {database_id[:8]}...")
+        
+        query = {
+            "database_id": database_id,
+            "sorts": [
+                {
+                    "property": "Date",
+                    "direction": "descending"
+                }
+            ],
+            "page_size": self.default_page_size
+        }
+        
+        if next_cursor:
+            query["start_cursor"] = next_cursor
+            
+        return query
+
     def validate_query_structure(self, query: Dict) -> bool:
         """
         Valida struttura query prima dell'invio.

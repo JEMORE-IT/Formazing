@@ -1,67 +1,34 @@
 <!-- 🧩 MOLECULE: Formazione Row -->
 <tr>
     <!-- Nome -->
-    <td>
-        <div class="fw-bold">{{ formazione.get('Nome', 'N/A') }}</div>
+    <td class="text-truncate" style="max-width: 0;" title="{{ formazione.get('Nome', 'N/A') }}">
+        <div class="fw-bold text-blu-jemore text-truncate">{{ formazione.get('Nome', 'N/A') }}</div>
         {% if formazione.get('Codice') %}
-            <small class="text-muted">{{ formazione['Codice'] }}</small>
+            <small class="text-muted d-block text-truncate">{{ formazione['Codice'] }}</small>
         {% endif %}
     </td>
     
     <!-- Area -->
-    <td>
+    <td class="text-truncate">
         {% set area = formazione.get('Area', 'N/A') | format_area %}
-        {% set area_upper = area|upper if area else 'N/A' %}
         {% set text = area %}
+        {% set icon = '' %}
+        {% set color = area | area_color %}
         
-        {# Matching robusto case-insensitive #}
-        {% if 'IT' in area_upper or 'INFO' in area_upper or 'TECH' in area_upper %}
-            {% set color = 'bg-primary' %}
-            {% set icon = 'bi bi-laptop' %}
-        {% elif 'R&D' in area_upper or 'R&amp;D' in area_upper or 'RICERCA' in area_upper or 'DEVELOP' in area_upper %}
-            {% set color = 'bg-danger' %}
-            {% set icon = 'bi bi-lightbulb' %}
-        {% elif 'MARKET' in area_upper %}
-            {% set color = 'bg-purple' %}
-            {% set icon = 'bi bi-megaphone' %}
-        {% elif 'COMMERC' in area_upper or 'SALES' in area_upper or 'VEND' in area_upper %}
-            {% set color = 'text-bg-warning' %}
-            {% set icon = 'bi bi-briefcase' %}
-        {% elif 'LEGAL' in area_upper or 'LEGALE' in area_upper or 'GIURID' in area_upper %}
-            {% set color = 'bg-brown' %}
-            {% set icon = 'bi bi-shield-check' %}
-        {% elif 'HR' in area_upper or 'HUMAN' in area_upper or 'RISORSE' in area_upper %}
-            {% set color = 'bg-success' %}
-            {% set icon = 'bi bi-people' %}
-        {% elif 'ALL' in area_upper or 'TUTT' in area_upper or 'GENER' in area_upper %}
-            {% set color = 'bg-pink' %}
-            {% set icon = 'bi bi-grid' %}
-        {% elif area == 'N/A' or not area %}
-            {% set color = 'bg-secondary' %}
-            {% set icon = 'bi bi-dash-circle' %}
-            {% set text = 'Non specificata' %}
-        {% else %}
-            {# Fallback con colore neutro per valori sconosciuti #}
-            {% set color = 'bg-secondary text-light' %}
-            {% set icon = 'bi bi-tag' %}
-        {% endif %}
-        
-        {% include 'atoms/badge.html' %}
+        <div class="text-truncate">
+            {% include 'atoms/badge.html' %}
+        </div>
     </td>
     
     <!-- Data/Ora -->
-    <td>
+    <td class="text-truncate">
         <div class="small">
-            {% set name = 'bi bi-calendar-date' %}
-            {% set size = 'me-1' %}
-            {% set color = 'text-muted' %}
-            {% include 'atoms/icon.html' %}
             {{ formazione.get('Data/Ora', 'Non programmata') }}
         </div>
     </td>
     
     <!-- Periodo -->
-    <td>
+    <td class="text-truncate">
         {% set periodo = formazione.get('Periodo', 'N/A') %}
         {% set periodo_upper = periodo|upper if periodo else 'N/A' %}
         {% set text = periodo %}
@@ -69,82 +36,97 @@
         {# Matching più robusto con varianti multiple #}
         {% if 'SPRING' in periodo_upper or 'PRIMAV' in periodo_upper %}
             {% set color = 'bg-success' %}
-            {% set icon = 'bi bi-flower1' %}
+            {% set icon = '' %}
         {% elif 'AUTUMN' in periodo_upper or 'AUTUN' in periodo_upper or 'FALL' in periodo_upper %}
             {% set color = 'bg-brown' %}
-            {% set icon = 'bi bi-leaf' %}
+            {% set icon = '' %}
         {% elif 'ONCE' in periodo_upper or 'UNA' in periodo_upper or 'TANTUM' in periodo_upper %}
             {% set color = 'text-bg-dark' %}
-            {% set icon = 'bi bi-calendar-check' %}
+            {% set icon = '' %}
         {% elif 'EXT' in periodo_upper or 'EXTERN' in periodo_upper or 'FUORI' in periodo_upper %}
             {% set color = 'bg-pink' %}
-            {% set icon = 'bi bi-box-arrow-up-right' %}
+            {% set icon = '' %}
         {% elif 'OUT' in periodo_upper or 'PROGRAM' in periodo_upper %}
             {% set color = 'bg-warning' %}
-            {% set icon = 'bi bi-exclamation-octagon' %}
+            {% set icon = '' %}
         {% elif periodo == 'N/A' or not periodo %}
             {% set color = 'bg-secondary' %}
-            {% set icon = 'bi bi-dash-circle' %}
+            {% set icon = '' %}
             {% set text = 'Non specificato' %}
         {% else %}
             {# Fallback con colore neutro per valori sconosciuti #}
             {% set color = 'bg-secondary text-light' %}
-            {% set icon = 'bi bi-calendar3' %}
+            {% set icon = '' %}
         {% endif %}
         
-        {% include 'atoms/badge.html' %}
+        <div class="text-truncate">
+            {% include 'atoms/badge.html' %}
+        </div>
     </td>
     
     <!-- Azioni -->
     <td>
-        <div class="d-flex gap-2">
-            {% if formazione.get('Stato') == 'Programmata' %}
-                <!-- Preview Calendarizzazione per formazioni Programmate -->
-                {% set variant = 'btn-primary' %}
-                {% set size = 'btn-sm' %}
-                {% set icon = 'bi bi-eye' %}
-                {% set text = 'Preview Calendarizzazione' %}
-                {% set onclick = "showPreview('" ~ formazione.get('_notion_id', '') ~ "', 'notification')" %}
-                {% include 'atoms/button.html' %}
-            {% elif formazione.get('Stato') == 'Calendarizzata' %}
-                <!-- Preview Feedback per formazioni Calendarizzate -->
-                {% set variant = 'btn-danger' %}
-                {% set size = 'btn-sm' %}
-                {% set icon = 'bi bi-chat-left-text' %}
-                {% set text = 'Preview Feedback' %}
-                {% set onclick = "showPreview('" ~ formazione.get('_notion_id', '') ~ "', 'feedback')" %}
-                {% include 'atoms/button.html' %}
+        <div class="d-flex gap-2 align-items-center">
+            {% if is_admin %}
+                {% if formazione.get('Stato') == 'Programmata' %}
+                    <!-- Preview Calendarizzazione per formazioni Programmate -->
+                    {% set variant = 'btn-jemore-giallo' %}
+                    {% set size = 'btn-sm' %}
+                    {% set text = 'Preview' %}
+                    {% set icon = none %}
+                    {% set onclick = "showPreview('" ~ formazione.get('_notion_id', '') ~ "', 'notification')" %}
+                    {% include 'atoms/button.html' %}
+                {% elif formazione.get('Stato') == 'Calendarizzata' %}
+                    <!-- Preview Feedback per formazioni Calendarizzate -->
+                    {% set variant = 'btn-jemore-blu' %}
+                    {% set size = 'btn-sm' %}
+                    {% set text = 'Preview' %}
+                    {% set icon = none %}
+                    {% set onclick = "showPreview('" ~ formazione.get('_notion_id', '') ~ "', 'feedback')" %}
+                    {% include 'atoms/button.html' %}
+                {% else %}
+                    <!-- Nessuna azione per formazioni Concluse -->
+                    {% set variant = 'btn-jemore-verde' %}
+                    {% set size = 'btn-sm' %}
+                    {% set text = 'Completata' %}
+                    {% set icon = none %}
+                    {% set disabled = true %}
+                    {% include 'atoms/button.html' %}
+                {% endif %}
             {% else %}
-                <!-- Nessuna azione per formazioni Concluse -->
-                {% set text = 'Completata' %}
-                {% set color = 'bg-success' %}
-                {% set icon = 'bi bi-check-circle' %}
-                {% include 'atoms/badge.html' %}
+                <!-- Messaggio Sola Lettura per non-admin -->
+                <span class="badge bg-light text-muted border py-2 px-3 extra-small">
+                    <i class="bi bi-eye-fill me-1"></i> Sola Lettura
+                </span>
             {% endif %}
         </div>
     </td>
 </tr>
 
 <script>
-function showPreview(trainingId, actionType) {
-    const titles = {
-        'notification': '📨 Generazione Preview Notifica',
-        'feedback': '📝 Generazione Preview Feedback'
-    };
-    
-    const messages = {
-        'notification': 'Preparazione messaggi Telegram, email e Teams...',
-        'feedback': 'Preparazione richiesta feedback...'
-    };
+if (typeof showPreview !== 'function') {
+    window.showPreview = function(trainingId, actionType) {
+        const titles = {
+            'notification': 'Generazione Preview Notifica',
+            'feedback': 'Generazione Preview Feedback'
+        };
+        
+        const messages = {
+            'notification': 'Preparazione messaggi Telegram, email e Teams...',
+            'feedback': 'Preparazione richiesta feedback...'
+        };
 
-    // Mostra loading con messaggio personalizzato
-    LoadingOverlay.show(titles[actionType], messages[actionType]);
-    
-    // Naviga alla preview (il loading si nasconderà al caricamento della nuova pagina)
-    const url = actionType === 'notification' 
-        ? `/preview/notification/${trainingId}`
-        : `/preview/feedback/${trainingId}`;
-    
-    window.location.href = url;
+        const targetUrl = actionType === 'notification' 
+            ? `/preview/notification/${trainingId}`
+            : `/preview/feedback/${trainingId}`;
+
+        // Feedback a livello di riga (opzionale ma carino per l'istante del click)
+        const actionsEl = document.getElementById(`actions-${trainingId}`);
+        if (actionsEl) actionsEl.classList.add('d-none');
+
+        // Navighiamo alla pagina di loading professionale
+        const loadingUrl = `/loading?next=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(titles[actionType])}&message=${encodeURIComponent(messages[actionType])}`;
+        window.location.href = loadingUrl;
+    };
 }
 </script>

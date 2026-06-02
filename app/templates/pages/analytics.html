@@ -1,0 +1,278 @@
+{% extends "layout/auth_required.html" %}
+
+{% block head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js Data Labels Plugin (per mostrare i totali sopra le barre) -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+{% endblock %}
+
+{% block page_content %}
+    <!-- Analytics Header -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap mb-4">
+        <div>
+            {% set title = 'Report & Analytics' %}
+            {% set subtitle = "Analisi visuale dell\'andamento storico delle formazioni." %}
+            {% set icon = 'bi bi-graph-up-arrow' %}
+            {% include 'atoms/page_header.html' %}
+        </div>
+        <div class="mt-2">
+            {% set text = 'Aggiorna da Notion' %}
+            {% set icon = 'bi bi-arrow-clockwise' %}
+            {% set variant = 'btn-jemore-dark-blu' %}
+            {% set size = 'btn-sm' %}
+            {% set onclick = "refreshAnalytics()" %}
+            {% include 'atoms/button.html' %}
+        </div>
+    </div>
+
+    <!-- 1. KPI Cards -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="card-jemore h-100 shadow-sm border-0 bg-white p-4 text-center">
+                <div class="text-muted text-uppercase extra-small fw-bold mb-1">Area Regina</div>
+                <div class="h4 fw-bold text-blu-jemore mb-0">{{ data.top_area }}</div>
+                <div class="extra-small text-muted mt-2">Maggior numero di formazioni</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-jemore h-100 shadow-sm border-0 bg-white p-4 text-center">
+                <div class="text-muted text-uppercase extra-small fw-bold mb-1">Media dell'anno accademico</div>
+                <div class="h3 fw-bold text-success mb-0">{{ data.avg_academic }}</div>
+                <div class="extra-small text-muted mt-2">Formazioni / mese (da Settembre)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-jemore h-100 shadow-sm border-0 bg-white p-4 text-center">
+                <div class="text-muted text-uppercase extra-small fw-bold mb-1">Media Storica</div>
+                <div class="h3 fw-bold text-blu-jemore mb-0">{{ data.avg_global }}</div>
+                <div class="extra-small text-muted mt-2">Formazioni / mese (da sempre)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-jemore h-100 shadow-sm border-0 bg-white p-4 text-center">
+                <div class="text-muted text-uppercase extra-small fw-bold mb-1">Formazioni Totali</div>
+                <div class="h3 fw-bold text-blu-jemore mb-0">{{ data.total }}</div>
+                <div class="extra-small text-muted mt-2">Conteggio indipendente dallo stato</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Area Distribution (Stacked Bar) -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card-jemore shadow-sm border-0 bg-white p-4">
+                <h5 class="fw-bold text-blu-jemore mb-4">Distribuzione per Area</h5>
+                <div style="height: 350px;">
+                    <canvas id="areaStackedChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Timelines -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-7">
+            <div class="card-jemore h-100 shadow-sm border-0 bg-white p-4">
+                <h5 class="fw-bold text-blu-jemore mb-4">Timeline Storica</h5>
+                <canvas id="fullTimelineChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="col-lg-5">
+            <div class="card-jemore h-100 shadow-sm border-0 bg-white p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold text-blu-jemore mb-0">Dettaglio Annuale</h5>
+                    <select class="form-select form-select-sm w-auto border-blu-jemore text-blu-jemore fw-bold" id="yearSelector">
+                        {% for year in data.available_years %}
+                        <option value="{{ year }}" {% if year == data.current_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <canvas id="yearlyDetailChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Seasonal Mix & Percentages -->
+    <div class="row g-4 mb-5">
+        <div class="col-12">
+            <div class="card-jemore shadow-sm border-0 bg-white p-4">
+                <h5 class="fw-bold text-blu-jemore mb-4">Distribuzione per Periodo</h5>
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div style="max-height: 250px;">
+                            <canvas id="periodoChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="row g-2 mt-4 mt-lg-0">
+                            {% for stat in data.periodo_stats %}
+                            <div class="col-6 col-lg-12">
+                                <div class="p-2 border rounded bg-light d-flex justify-content-between align-items-center">
+                                    <span class="small fw-bold text-muted">{{ stat.label }}</span>
+                                    <span class="badge bg-blu-jemore">{{ stat.perc }}%</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function refreshAnalytics() {
+        const targetUrl = "{{ url_for('main.analytics', force_refresh=1) }}";
+        const loadingUrl = `/loading?next=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent('Aggiornamento Dati')}&message=${encodeURIComponent('Rielaborazione statistiche da Notion...')}`;
+        window.location.href = loadingUrl;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.LoadingOverlay) LoadingOverlay.hide();
+
+        const rawData = {{ data | tojson | safe }};
+        Chart.register(ChartDataLabels);
+        
+        function getBaseColor(area) {
+            const a = area.toUpperCase();
+            if (a.includes('IT')) return '#004a99';
+            if (a.includes('R&D')) return '#dc3545';
+            if (a.includes('MARKETING')) return '#6f42c1';
+            if (a.includes('COMMERCIALE') || a.includes('SALES')) return '#ffc107';
+            if (a.includes('LEGAL')) return '#795548';
+            if (a.includes('HR')) return '#198754';
+            if (a.includes('ALL') || a.includes('TUTTI')) return '#e83e8c';
+            if (a.includes('TEST')) return '#0dcaf0';
+            return '#6c757d';
+        }
+
+        // --- 1. Area Stacked Bar Chart ---
+        new Chart(document.getElementById('areaStackedChart'), {
+            type: 'bar',
+            data: {
+                labels: rawData.area_labels,
+                datasets: [
+                    {
+                        label: 'Soci Effettivi',
+                        data: rawData.area_regular,
+                        backgroundColor: rawData.area_labels.map(l => getBaseColor(l)),
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Soci in Prova',
+                        data: rawData.area_prova,
+                        backgroundColor: rawData.area_labels.map(l => getBaseColor(l) + '66'),
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 30 // Aggiunge spazio sopra le barre per non tagliare i numeri
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom' },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (value, ctx) => {
+                            if (ctx.datasetIndex === 1) {
+                                const total = ctx.chart.data.datasets[0].data[ctx.dataIndex] + value;
+                                return total > 0 ? total : '';
+                            }
+                            return '';
+                        },
+                        font: { weight: 'bold' },
+                        color: '#004a99'
+                    }
+                },
+                scales: {
+                    x: { stacked: true },
+                    y: { 
+                        stacked: true, 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1 },
+                        grace: '15%' // Spazio extra dinamico sopra la barra più alta
+                    }
+                }
+            }
+        });
+
+        // --- 2. Full Timeline ---
+        new Chart(document.getElementById('fullTimelineChart'), {
+            type: 'line',
+            data: {
+                labels: rawData.timeline_labels,
+                datasets: [{
+                    label: 'Eventi / Mese',
+                    data: rawData.timeline_values,
+                    borderColor: '#004a99',
+                    backgroundColor: '#004a9911',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                plugins: { datalabels: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+
+        // --- 3. Yearly Detail ---
+        let yearlyChart = new Chart(document.getElementById('yearlyDetailChart'), {
+            type: 'bar',
+            data: {
+                labels: rawData.month_names,
+                datasets: [{
+                    label: 'Formazioni',
+                    data: rawData.yearly_data[rawData.current_year] || new Array(12).fill(0),
+                    backgroundColor: '#004a99',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                plugins: { datalabels: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+
+        document.getElementById('yearSelector').addEventListener('change', function(e) {
+            const year = e.target.value;
+            yearlyChart.data.datasets[0].data = rawData.yearly_data[year];
+            yearlyChart.update();
+        });
+
+        // --- 4. Periodo Chart ---
+        new Chart(document.getElementById('periodoChart'), {
+            type: 'bar',
+            data: {
+                labels: rawData.periodo_stats.map(s => s.label),
+                datasets: [{
+                    data: rawData.periodo_stats.map(s => s.count),
+                    backgroundColor: '#004a99',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: { display: false }
+                },
+                scales: { x: { beginAtZero: true, ticks: { stepSize: 2 } } }
+            }
+        });
+    });
+</script>
+{% endblock %}

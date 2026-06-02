@@ -1,0 +1,11 @@
+<div class="row mb-{{ margin_bottom|default('4') }}">
+    <div class="col-lg-{{ col_size|default('12') }}">
+        <h1 class="display-{{ display_size|default('5') }} fw-bold text-white mb-2">
+        {% if icon %}<i class="{{ icon }} me-2 text-jemore-giallo"></i>{% endif %}
+            {{ title }}
+        </h1>
+        {% if subtitle %}
+        <p class="lead text-white-50">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,38 @@
+<nav class="navbar navbar-expand-lg navbar-jemore py-2">
+    <div class="container">
+        <a href="{{ url_for('main.dashboard') }}" class="navbar-brand py-0">
+            <img src="{{ url_for('static', filename='images/logo_jemore.png') }}" alt="JEMORE">
+        </a>
+        
+        <button class="navbar-toggler border-blu-jemore text-blu-jemore" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="bi bi-list"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <div class="navbar-nav me-auto mb-2 mb-lg-0">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-link-jemore">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+                <a href="{{ url_for('main.analytics') }}" class="nav-link-jemore">
+                    <i class="bi bi-graph-up-arrow me-1"></i> Analytics
+                </a>
+                <a href="/guida" class="nav-link-jemore">
+                    <i class="bi bi-mortarboard me-1"></i> Guida
+                </a>
+            </div>
+
+            {% if current_user %}
+            <!-- User Menu / Logout -->
+            <div class="d-flex align-items-center border-start-lg ps-lg-3 border-blu-jemore border-opacity-25 mt-3 mt-lg-0">
+                <div class="text-blu-jemore text-end-lg me-3">
+                    <div class="small fw-bold lh-1">{{ current_user.name }}</div>
+                    <div class="extra-small opacity-75">{{ 'Amministratore' if is_admin else 'Socio' }}</div>
+                </div>
+                <a href="{{ url_for('main.logout') }}" class="btn btn-jemore-dark-blu rounded-pill px-3 py-1 extra-small">
+                    Logout <i class="bi bi-box-arrow-right ms-1"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</nav>

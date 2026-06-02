@@ -43,7 +43,7 @@ class GraphClient:
         self._access_token = None
         self._token_expiry = None  # Traccia scadenza token
         
-        logger.info(f"GraphClient inizializzato | User: {user_email}")
+        logger.debug(f"GraphClient inizializzato | User: {user_email}")
     
     def _get_access_token(self) -> str:
         """
@@ -84,14 +84,14 @@ class GraphClient:
                 expires_in = result.get("expires_in", 3600)
                 self._token_expiry = datetime.now() + timedelta(seconds=expires_in)
                 
-                logger.info(f"✅ Access token acquisito | Expiry: {self._token_expiry.strftime('%H:%M:%S')}")
+                logger.info(f"Access token acquisito | Expiry: {self._token_expiry.strftime('%H:%M:%S')}")
                 return self._access_token
             else:
                 error_msg = result.get("error_description", "Unknown error")
                 raise GraphClientError(f"Token acquisition failed: {error_msg}")
                 
         except Exception as e:
-            logger.error(f"❌ Authentication error | Error: {e}")
+            logger.error(f"Authentication error | Error: {e}")
             raise GraphClientError(f"Authentication failed: {str(e)}")
     
     def make_request(self, method: str, endpoint: str, json_data: dict = None) -> dict:
@@ -134,9 +134,9 @@ class GraphClient:
             except:
                 error_detail = e.response.text
             
-            logger.error(f"❌ Graph API error | Status: {e.response.status_code} | Detail: {error_detail}")
+            logger.error(f"Graph API error | Status: {e.response.status_code} | Detail: {error_detail}")
             raise GraphClientError(f"API request failed: {error_detail}")
             
         except Exception as e:
-            logger.error(f"❌ Request error | Error: {e}")
+            logger.error(f"Request error | Error: {e}")
             raise GraphClientError(f"Request failed: {str(e)}")

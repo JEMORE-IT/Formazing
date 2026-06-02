@@ -1,13 +1,40 @@
-<!-- ⚛️ ATOM: Telegram message preview card -->
-<div class="card border-light">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            {% set text = area %}
-            {% set color = 'bg-primary' %}
+<!-- ⚛️ ATOM: Telegram message preview card (Split-View Editor) -->
+<!-- ⚛️ ATOM: Telegram message preview card (Split-View Editor) -->
+<div class="card border-light shadow-sm">
+    <div class="card-header bg-white border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-blu-jemore"><i class="bi bi-chat-dots me-2"></i> Canale: {{ display_name|default(area) }}</span>
+            {% set text = 'Messaggio ' ~ (msg_index + 1) %}
+            {% set color = 'bg-secondary' %}
             {% include 'atoms/badge.html' %}
         </div>
-        
-        <pre class="border rounded p-3 bg-light mb-0 overflow-auto" 
-             style="max-height: 400px; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word;">{{ message_text }}</pre>
+    </div>
+    <div class="card-body p-0 border-top">
+        <div class="row g-0">
+            <!-- Editor Column -->
+            <div class="col-lg-6 border-end p-3">
+                <label class="form-label small fw-bold text-muted mb-2">Editor - Markdown</label>
+                <!-- Campo hidden per passare la chiave tecnica del gruppo al server -->
+                <input type="hidden" name="telegram_group_{{ msg_index }}" value="{{ area }}">
+                <textarea class="preview-editor-textarea telegram-editor-js" 
+                          data-index="{{ msg_index }}" 
+                          rows="10"
+                          name="telegram_msg_{{ msg_index }}">{{ message_text }}</textarea>
+                <div class="mt-2 extra-small text-muted">
+                    <i class="bi bi-info-circle me-1"></i> Puoi usare **grassetto**, _corsivo_ e [link](url).
+                </div>
+            </div>
+            
+            <!-- Mockup Column -->
+            <div class="col-lg-6 p-3 bg-light">
+                <label class="form-label small fw-bold text-muted mb-2">Anteprima</label>
+                <div class="telegram-mockup d-flex align-items-end">
+                    <div class="telegram-bubble shadow-sm" id="telegram-preview-{{ msg_index }}">
+                        <!-- Caricato dinamicamente via JS -->
+                        {{ message_text }}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

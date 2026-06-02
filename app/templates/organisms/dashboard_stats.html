@@ -1,7 +1,7 @@
 <!-- 🦠 ORGANISM: Dashboard Stats -->
-<div class="row g-3 mb-4">
+<div class="card-jemore row g-3 mb-4 p-3">
     <!-- Stat Card: Programmate -->
-    <div class="col-3">
+    <div class="col-6 col-md-6 col-lg-3">
         {% set status_type = 'programmata' %}
         {% set count = stats.programmata %}
         {% set title = 'Programmate' %}
@@ -10,7 +10,7 @@
     </div>
 
     <!-- Stat Card: Calendarizzate -->
-    <div class="col-3">
+    <div class="col-6 col-md-6 col-lg-3">
         {% set status_type = 'calendarizzata' %}
         {% set count = stats.calendarizzata %}
         {% set title = 'Calendarizzate' %}
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Stat Card: Concluse -->
-    <div class="col-3">
+    <div class="col-6 col-md-6 col-lg-3">
         {% set status_type = 'conclusa' %}
         {% set count = stats.conclusa %}
         {% set title = 'Concluse' %}
@@ -28,11 +28,11 @@
     </div>
 
     <!-- Stat Card: Totale -->
-    <div class="col-3">
+    <div class="col-6 col-md-6 col-lg-3">
         {% set status_type = 'totale' %}
         {% set count = stats.totale %}
         {% set title = 'Totale' %}
-        {% set subtitle = 'Tutte le formazioni' %}
+        {% set subtitle = 'Tutte' %}
         {% include 'molecules/stat_card.html' %}
     </div>
 </div>

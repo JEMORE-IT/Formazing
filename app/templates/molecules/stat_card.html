@@ -1,23 +1,22 @@
 <!-- 🧩 MOLECULE: Stat Card -->
 {% set card_configs = {
-    'programmata': {'bg': 'bg-warning text-dark', 'icon': 'bi bi-clock-history'},
-    'calendarizzata': {'bg': 'bg-info text-white', 'icon': 'bi bi-calendar-event'},
+    'programmata': {'bg': 'bg-giallo-jemore text-giallo-jemore-fg', 'icon': 'bi bi-clock-history'},
+    'calendarizzata': {'bg': 'bg-blu-jemore text-white', 'icon': 'bi bi-calendar-event'},
     'conclusa': {'bg': 'bg-success text-white', 'icon': 'bi bi-check-circle'},
-    'totale': {'bg': 'bg-primary text-white', 'icon': 'bi bi-list-ul'}
+    'totale': {'bg': 'bg-bianco-latte-fg text-bianco-latte', 'icon': 'bi bi-list-ul'}
 } %}
 
-{% set config = card_configs[status_type] if status_type in card_configs else card_configs['totale'] %}
+{% set config = card_configs.get(status_type, card_configs['totale']) %}
 
-<div class="card {{ config.bg }} border-0 shadow-sm">
-    <div class="card-body text-center">
-        {% set name = config.icon %}
-        {% set size = 'display-4 mb-2' %}
-        {% include 'atoms/icon.html' %}
-        
+<div class="card-jemore border-0 shadow-sm {{ config.bg }}">
+    <div class="card-body text-center p-3">
+        <div class="mb-2">
+            <i class="{{ config.icon }} fs-3"></i>
+        </div>
         <h3 class="fw-bold mb-1">{{ count|default(0) }}</h3>
-        <h6 class="mb-0">{{ title|default('Statistiche') }}</h6>
+        <h6 class="mb-0 small">{{ title|default('Statistiche') }}</h6>
         {% if subtitle %}
-        <small class="opacity-75">{{ subtitle }}</small>
+        <small class="opacity-75 extra-small d-block">{{ subtitle }}</small>
         {% endif %}
     </div>
 </div>

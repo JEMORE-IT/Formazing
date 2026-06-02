@@ -73,9 +73,9 @@ class MicrosoftService:
             email_formatter=self.email_formatter
         )
         
-        logger.info("✅ MicrosoftService inizializzato | Componenti: GraphClient, EmailFormatter, CalendarOperations")
+        logger.debug("MicrosoftService inizializzato | Componenti: GraphClient, EmailFormatter, CalendarOperations")
     
-    async def create_training_event(self, formazione_data: Dict) -> Dict:
+    async def create_training_event(self, formazione_data: Dict, custom_body: str = None) -> Dict:
         """
         Crea un evento calendario con Teams meeting per una formazione.
         
@@ -119,29 +119,27 @@ class MicrosoftService:
             'https://teams.microsoft.com/l/meetup-join/...'
         """
         try:
-            logger.info(f"Creazione evento Teams | Formazione: {formazione_data.get('Nome')}")
-            
             # Valida dati input
             self._validate_formazione_data(formazione_data)
             
             # Delega a calendar_operations
-            result = self.calendar_operations.create_calendar_event(formazione_data)
+            result = self.calendar_operations.create_calendar_event(formazione_data, custom_body)
             
             # Aggiungi status
             result['status'] = 'success'
             
             logger.info(
-                f"✅ Evento Teams creato | Subject: {result.get('subject')} | "
+                f"Evento Teams creato | Subject: {result.get('subject')} | "
                 f"Event ID: ...{result.get('event_id', '')[-12:]}"
             )
             
             return result
             
         except (CalendarOperationsError, EmailFormatterError, GraphClientError) as e:
-            logger.error(f"❌ MicrosoftService error | Component error: {e}")
+            logger.error(f"MicrosoftService error | Component error: {e}")
             raise MicrosoftServiceError(f"Failed to create training event: {str(e)}")
         except Exception as e:
-            logger.error(f"❌ Errore imprevisto creazione evento | Error: {e}")
+            logger.error(f"Errore imprevisto creazione evento | Error: {e}")
             raise MicrosoftServiceError(f"Unexpected error: {str(e)}")
     
     def _validate_formazione_data(self, formazione_data: Dict) -> None:

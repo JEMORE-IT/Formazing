@@ -1,10 +1,26 @@
-<!-- 🏗️ ORGANISM: Flash Messages Container -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="container mt-3">
-            {% for category, message in messages %}
-                {% include 'molecules/flash_message.html' %}
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endwith %}
+<!-- 🏗️ ORGANISM: Flash Messages (Toasts) Container -->
+<div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 10000;">
+    <div class="toast-container position-static">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% include 'molecules/flash_message.html' %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inizializza tutti i toast presenti nella pagina
+        const toastEls = document.querySelectorAll('.toast');
+        toastEls.forEach(el => {
+            const toast = new bootstrap.Toast(el, {
+                autohide: true,
+                delay: 5000 // Scompaiono dopo 5 secondi
+            });
+            toast.show();
+        });
+    });
+</script>
