@@ -12,7 +12,7 @@ Configurazione centralizzata dell'applicazione Flask con:
 
 from flask import Flask, session
 from flask_caching import Cache
-from config import Config
+from config import proteus, setup_logging
 import logging
 
 # Inizializza il sistema di Caching
@@ -28,18 +28,20 @@ def create_app():
     Returns:
         Flask: Applicazione configurata e pronta
     """
-    # Configura logging PRIMA di tutto (setup centralizzato)
-    Config.setup_logging()
+    # Configura logging PRIMA di tutto (setup centralizzato via Proteus)
+    setup_logging()
     logger.info("Inizializzazione Flask app Formazing...")
     
     # Crea l'app Flask
     app = Flask(__name__)
     
-    # Carica configurazione
-    app.config.from_object(Config)
+    # Carica configurazione critica per Flask da Proteus
+    app.config['SECRET_KEY'] = proteus.get('FLASK.SECRET_KEY', 'dev-secret-key')
+    app.config['DEBUG'] = proteus.get('FLASK.DEBUG_MODE', False, cast=bool)
     
     # Inizializza la cache con l'app
     cache.init_app(app)
+
     
     # --- CONTEXT PROCESSOR GLOBALE ---
     @app.context_processor

@@ -8,7 +8,7 @@ import threading
 import asyncio
 from flask import session, redirect, url_for
 from functools import wraps
-from config import Config
+from config import proteus
 
 logger = logging.getLogger(__name__)
 
@@ -36,33 +36,32 @@ class AuthService:
         if hasattr(self, '_initialized'):
             return
         self._initialized = True
-        
         self.msal_app = msal.ConfidentialClientApplication(
-            Config.MICROSOFT_CLIENT_ID,
-            authority=Config.MSAL_AUTHORITY,
-            client_credential=Config.MICROSOFT_CLIENT_SECRET
+            proteus.get('MICROSOFT.CLIENT_ID'),
+            authority=f"https://login.microsoftonline.com/{proteus.get('MICROSOFT.TENANT_ID', 'common')}",
+            client_credential=proteus.get('MICROSOFT.CLIENT_SECRET')
         )
-        logger.debug("MSAL ConfidentialClientApplication inizializzata")
+        logger.debug("MSAL ConfidentialClientApplication inizializzata via Proteus")
 
     def build_auth_url(self):
         """Genera l'URL per il login Microsoft."""
         return self.msal_app.get_authorization_request_url(
-            Config.MSAL_SCOPES,
-            redirect_uri=Config.MSAL_REDIRECT_URI
+            ["User.Read"], # Scopes standard
+            redirect_uri=proteus.get('MSAL_REDIRECT_URI', 'http://localhost:5001/auth/callback')
         )
 
     def get_token_from_code(self, auth_code):
         """Scambia il codice di autorizzazione per un token e i dati utente."""
         return self.msal_app.acquire_token_by_authorization_code(
             auth_code,
-            scopes=Config.MSAL_SCOPES,
-            redirect_uri=Config.MSAL_REDIRECT_URI
+            scopes=["User.Read"],
+            redirect_uri=proteus.get('MSAL_REDIRECT_URI', 'http://localhost:5001/auth/callback')
         )
 
     def build_logout_url(self, redirect_to):
         """Genera l'URL per il logout da Microsoft."""
         return (
-            f"{Config.MSAL_AUTHORITY}/oauth2/v2.0/logout"
+            f"https://login.microsoftonline.com/{proteus.get('MICROSOFT.TENANT_ID', 'common')}/oauth2/v2.0/logout"
             f"?post_logout_redirect_uri={redirect_to}"
         )
 
@@ -89,7 +88,8 @@ def login_required(f):
         email = user.get('preferred_username', '').lower()
         domain = email.split('@')[-1] if '@' in email else ''
         
-        if domain not in Config.ALLOWED_DOMAINS:
+        allowed_domains = proteus.get('AUTH.ALLOWED_DOMAINS', 'jemore.it').split(',')     
+        if domain not in allowed_domains:
             logger.warning(f"Accesso negato: dominio '{domain}' non autorizzato per {email}")
             session.clear()
             return "Dominio non autorizzato. Usa l'account JEMORE.", 403

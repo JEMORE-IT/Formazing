@@ -276,20 +276,20 @@ class TelegramCommands:
             return []
         
         try:
-            # Recupero tutte le formazioni calendarizzate
-            all_formazioni = await self.notion_service.get_formazioni_by_status('Calendarizzata')
+            # Calcolo date ISO string
+            date_str = target_date.strftime('%Y-%m-%d')
             
-            # Filtraggio per data target
-            formazioni_del_giorno = []
-            for formazione in all_formazioni:
-                formazione_date = self._extract_date_from_formazione(formazione)
-                if formazione_date and formazione_date == target_date.strftime('%d/%m/%Y'):
-                    formazioni_del_giorno.append(formazione)
+            # Recupero formazioni filtrate direttamente da Notion
+            formazioni_del_giorno = await self.notion_service.get_formazioni_by_status_and_date_range(
+                status='Calendarizzata',
+                start_date=date_str,
+                end_date=date_str
+            )
             
             # Ordinamento per orario
             sorted_formazioni = sorted(formazioni_del_giorno, key=lambda x: self._extract_time_from_formazione(x))
             
-            logger.info(f"Recuperate {len(sorted_formazioni)} formazioni per {target_date.strftime('%d/%m/%Y')}")
+            logger.info(f"Recuperate {len(sorted_formazioni)} formazioni filtrate per {date_str}")
             return sorted_formazioni
             
         except Exception as e:
@@ -311,23 +311,18 @@ class TelegramCommands:
             return []
         
         try:
-            # Recupero base da Notion
-            all_formazioni = await self.notion_service.get_formazioni_by_status('Calendarizzata')
+            # Calcolo date ISO string
+            start_date_str = start_date.strftime('%Y-%m-%d')
+            end_date_str = end_date.strftime('%Y-%m-%d')
             
-            # Filtraggio per range di date
-            formazioni_periodo = []
-            for formazione in all_formazioni:
-                formazione_date_str = self._extract_date_from_formazione(formazione)
-                if formazione_date_str:
-                    try:
-                        formazione_date = datetime.strptime(formazione_date_str, '%d/%m/%Y').date()
-                        if start_date <= formazione_date <= end_date:
-                            formazioni_periodo.append(formazione)
-                    except ValueError:
-                        logger.warning(f"Data non parsabile: {formazione_date_str}")
-                        continue
+            # Recupero formazioni filtrate direttamente da Notion
+            formazioni_periodo = await self.notion_service.get_formazioni_by_status_and_date_range(
+                status='Calendarizzata',
+                start_date=start_date_str,
+                end_date=end_date_str
+            )
             
-            logger.info(f"Recuperate {len(formazioni_periodo)} formazioni per range {start_date}-{end_date}")
+            logger.info(f"Recuperate {len(formazioni_periodo)} formazioni filtrate per range {start_date_str} - {end_date_str}")
             return formazioni_periodo
             
         except Exception as e:

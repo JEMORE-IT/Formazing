@@ -102,6 +102,43 @@ class NotionService:
             logger.error(f"Errore query formazioni | Status: '{status}' | Error: {e}")
             raise NotionServiceError(f"Errore recupero formazioni: {e}")
     
+    async def get_formazioni_by_status_and_date_range(self, status: str, start_date: str, end_date: str) -> List[Dict]:
+        """
+        Recupera formazioni filtrate per status specifico e range di date.
+        
+        Args:
+            status: Status formazione ("Programmata", "Calendarizzata", "Conclusa")
+            start_date: Data inizio (ISO string YYYY-MM-DD)
+            end_date: Data fine (ISO string YYYY-MM-DD)
+            
+        Returns:
+            List[Dict]: Lista formazioni filtrate e normalizzate
+            
+        Raises:
+            NotionServiceError: Errori API o parsing dati
+        """
+        try:
+            # 1. Costruisci query con QueryBuilder
+            query = self.query_builder.build_status_and_date_range_query(
+                status=status,
+                start_date=start_date,
+                end_date=end_date,
+                database_id=self.client.get_database_id()
+            )
+            
+            # 2. Esegui query con Client
+            response = self.client.get_client().databases.query(**query)
+            
+            # 3. Parsa risultati con DataParser
+            formazioni = self.data_parser.parse_formazioni_list(response)
+            
+            logger.info(f"Formazioni recuperate | Status: '{status}' | Range: {start_date}-{end_date} | Count: {len(formazioni)}")
+            return formazioni
+            
+        except Exception as e:
+            logger.error(f"Errore query formazioni | Status: '{status}' | Range: {start_date}-{end_date} | Error: {e}")
+            raise NotionServiceError(f"Errore recupero formazioni per range date: {e}")
+    
     async def get_dashboard_data(self) -> Dict[str, List[Dict]]:
         """
         Recupera tutti i dati per la dashboard in un'unica operazione ottimizzata.

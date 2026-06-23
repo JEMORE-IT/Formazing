@@ -201,6 +201,57 @@ class NotionQueryBuilder:
         
         return query
     
+    def build_status_and_date_range_query(self, status: str, start_date: str, end_date: str, database_id: str) -> Dict:
+        """
+        Costruisce query filtrata per status formazione e range di date.
+        
+        UTILE PER: Query di ottimizzazione per bot telegram.
+        
+        Args:
+            status: Status da filtrare
+            start_date: Data inizio (ISO format YYYY-MM-DD)
+            end_date: Data fine (ISO format YYYY-MM-DD)
+            database_id: ID database target
+        
+        Returns:
+            Dict: Query con filtro combinato status e date range
+        """
+        logger.debug(f"Costruisco query combinata: status={status}, range={start_date} - {end_date}")
+        
+        query = {
+            "database_id": database_id,
+            "filter": {
+                "and": [
+                    {
+                        "property": "Stato",
+                        "status": {
+                            "equals": status
+                        }
+                    },
+                    {
+                        "property": "Date",
+                        "date": {
+                            "on_or_after": start_date
+                        }
+                    },
+                    {
+                        "property": "Date",
+                        "date": {
+                            "on_or_before": end_date
+                        }
+                    }
+                ]
+            },
+            "sorts": [
+                {
+                    "property": "Date",
+                    "direction": "ascending"
+                }
+            ]
+        }
+        
+        return query
+    
     def build_all_records_query(self, database_id: str, next_cursor: str = None) -> Dict:
         """
         Costruisce query globale senza filtri per recuperare tutto il database.

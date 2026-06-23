@@ -9,8 +9,8 @@ Questo modulo gestisce:
 """
 
 import logging
-import os
 from notion_client import Client
+from config import proteus
 
 
 logger = logging.getLogger(__name__)
@@ -32,16 +32,16 @@ class NotionClient:
         Inizializza client Notion con autenticazione.
         
         Args:
-            token: Token Notion (da .env se None)
-            database_id: ID database formazioni (da .env se None)
+            token: Token Notion (da proteus se None)
+            database_id: ID database formazioni (da proteus se None)
         
         Raises:
             ValueError: Se credenziali mancanti
             Exception: Se inizializzazione client fallisce
         """
         # Configurazione credenziali
-        self.token = token or os.getenv('NOTION_TOKEN')
-        self.database_id = database_id or os.getenv('NOTION_DATABASE_ID')
+        self.token = token or proteus.get('NOTION.TOKEN')
+        self.database_id = database_id or proteus.get('NOTION.DATABASE_ID')
         
         # Validazione configurazione critica
         self._validate_credentials()

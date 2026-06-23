@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 from app.services.notion import NotionService, NotionServiceError
 from app.services.telegram_service import TelegramService
 from app.services.microsoft import MicrosoftService, MicrosoftServiceError
-from config import Config
+from config import proteus
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +75,10 @@ class TrainingService:
         # Inizializza servizi dipendenti
         self.notion_service = NotionService()
         self.telegram_service = TelegramService(
-            token=Config.TELEGRAM_BOT_TOKEN,
+            token=proteus.get('TELEGRAM.BOT_TOKEN'),
             notion_service=self.notion_service,
-            groups_config_path=Config.TELEGRAM_GROUPS_CONFIG,
-            templates_config_path=Config.TELEGRAM_TEMPLATES_CONFIG
+            groups_config_path=proteus.get('TELEGRAM.GROUPS_CONFIG', 'config/telegram_groups.json'),
+            templates_config_path=proteus.get('TELEGRAM.TEMPLATES_CONFIG', 'config/message_templates.yaml')
         )
         self.microsoft_service = MicrosoftService()
         
@@ -137,6 +137,8 @@ class TrainingService:
             # Aggiungi codice temporaneamente per preview
             training_preview = training.copy()
             training_preview['Codice'] = generated_code
+            # Aggiungi un link fittizio per la preview
+            training_preview['Link Teams'] = "https://teams.microsoft.com/link/verra/generato/dopo/conferma"
             
             # Genera messaggi preview Telegram per ogni area
             messages_preview = []
@@ -280,7 +282,15 @@ class TrainingService:
             # 5. Recupera formazione aggiornata per invio Telegram
             updated_training = await self.notion_service.get_formazione_by_id(training_id)
             
-            # 6. Invia messaggi Telegram (usa custom_messages se forniti)
+            # Sostituisci il link fittizio nei custom_messages con quello reale
+            if custom_messages:
+                dummy_link = "https://teams.microsoft.com/link/verra/generato/dopo/conferma"
+                real_link = teams_link if teams_link else ""
+                for key in custom_messages:
+                    if custom_messages[key]:
+                        custom_messages[key] = custom_messages[key].replace(dummy_link, real_link)
+            
+            # Invia messaggi Telegram (usa custom_messages se forniti)
             send_results = await self.telegram_service.send_training_notification(updated_training, custom_messages)
             
             result = {
@@ -483,7 +493,8 @@ class TrainingService:
         Esempio: IT-Security_Training-2024-SPRING-01
         """
         # File per il contatore di sequenza
-        counter_file = os.path.join(Config.BASE_DIR, 'sequence_counter.txt')
+        base_dir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        counter_file = os.path.join(base_dir, 'sequence_counter.txt')
 
         # Leggi il contatore corrente, incrementalo e salvalo
         try:
@@ -564,5 +575,5 @@ class TrainingService:
             str: Link di feedback
         """
 
-        feedback_link = "https://forms.office.com/Pages/ResponsePage.aspx?id=JO7KyoQGGkC5EEkYgD6mIjL0jCxS46xHtwtc9qTqajFUMTlBRU5VRzlRUjhGSFdCUEI3QU9YWU5GNC4u"
+        feedback_link = proteus.get('APP.LINKS.FEEDBACK_FORM')
         return feedback_link

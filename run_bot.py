@@ -8,14 +8,10 @@ come /oggi, /domani, /settimana senza interferire con il processo Flask.
 
 import logging
 from app.services.training_service import TrainingService
-from dotenv import load_dotenv
-from config import Config
-
-# Carica le variabili d'ambiente dal file .env
-load_dotenv()
+from config import setup_logging
 
 # Configura logging centralizzato PRIMA di tutto
-Config.setup_logging()
+setup_logging()
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
@@ -33,7 +29,7 @@ if __name__ == "__main__":
     # Usa il metodo run_bot_sync per gestire il bot in modalità polling
     # Gestisce avvio, ascolto comandi e spegnimento pulito
     try:
-        logger.info("Avvio bot in modalit polling...")
+        logger.info("Avvio bot in modalità polling...")
         training_service.telegram_service.run_bot_sync()
     except KeyboardInterrupt:
         logger.info("Interruzione utente ricevuta (CTRL+C)")
@@ -43,3 +39,4 @@ if __name__ == "__main__":
         logger.info("=" * 80)
         logger.info("Processo bot terminato")
         logger.info("=" * 80)
+

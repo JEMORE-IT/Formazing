@@ -11,6 +11,8 @@ from typing import Dict, List
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from config import proteus
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,28 +34,14 @@ class CalendarOperations:
         """
         self.graph_client = graph_client
         self.email_formatter = email_formatter
-        self.area_emails = self._load_area_emails()
         
-        logger.debug("CalendarOperations inizializzato")
-    
-    def _load_area_emails(self) -> Dict[str, str]:
-        """Carica il mapping Area → Email dal file JSON."""
-        try:
-            base_path = Path(__file__).parent.parent.parent.parent
-            email_config_path = base_path / "config" / "microsoft_emails.json"
-            
-            with open(email_config_path, 'r', encoding='utf-8') as f:
-                area_emails = json.load(f)
-            
-            logger.debug(f"Mappature email aree caricate | Count: {len(area_emails)}")
-            return area_emails
-            
-        except FileNotFoundError:
-            logger.error(f"Config email aree non trovato | Path: {email_config_path}")
-            raise CalendarOperationsError(f"Missing email config: {email_config_path}")
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON non valido in config email | Error: {e}")
-            raise CalendarOperationsError(f"Invalid email config JSON: {e}")
+        # Carica da Proteus (namespace microsoft.emails caricato in config.py)
+        self.area_emails = proteus.get('microsoft.emails', {})
+        if not self.area_emails:
+             logger.warning("Mappatura email Microsoft non trovata in Proteus")
+        
+        logger.debug("CalendarOperations inizializzato via Proteus")
+
     
     def _convert_notion_date_to_iso(self, date_str: str) -> str:
         """
