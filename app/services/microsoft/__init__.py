@@ -52,11 +52,11 @@ class MicrosoftService:
         """
         # Carica da config se non forniti
         if any(x is None for x in [tenant_id, client_id, client_secret, user_email]):
-            from config import Config
-            tenant_id = tenant_id or Config.MICROSOFT_TENANT_ID
-            client_id = client_id or Config.MICROSOFT_CLIENT_ID
-            client_secret = client_secret or Config.MICROSOFT_CLIENT_SECRET
-            user_email = user_email or Config.MICROSOFT_USER_EMAIL
+            from config import proteus
+            tenant_id = tenant_id or proteus.get('MICROSOFT.TENANT_ID')
+            client_id = client_id or proteus.get('MICROSOFT.CLIENT_ID')
+            client_secret = client_secret or proteus.get('MICROSOFT.CLIENT_SECRET')
+            user_email = user_email or proteus.get('MICROSOFT.USER_EMAIL')
         
         # Inizializza sottomoduli (senza TeamsMeeting)
         self.graph_client = GraphClient(

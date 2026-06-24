@@ -16,7 +16,13 @@
             {% set icon = 'bi bi-graph-up-arrow' %}
             {% include 'atoms/page_header.html' %}
         </div>
-        <div class="mt-2">
+        <div class="mt-2 d-flex gap-2">
+            <!-- Link alla Dashboard Feedback (Excel/Sharepoint) -->
+             {% comment %} mettiamo i bordi arrotondati {% endcomment %}
+            <a href="{{ feedback_dashboard_url }}" target="_blank" class="btn btn-sm btn-outline-success d-flex align-items-center rounded">
+                <i class="bi bi-file-earmark-excel me-2"></i> Dashboard con Feedback
+            </a>
+
             {% set text = 'Aggiorna da Notion' %}
             {% set icon = 'bi bi-arrow-clockwise' %}
             {% set variant = 'btn-jemore-dark-blu' %}

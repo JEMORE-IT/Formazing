@@ -23,6 +23,8 @@ from typing import List, Dict, Optional
 import telegram
 from telegram.ext import Application
 
+from config import proteus
+
 try:
     from .bot import TelegramFormatter, TelegramCommands
 except ImportError:
@@ -66,101 +68,28 @@ class TelegramService:
             groups_config_path (str): Path telegram_groups.json
             templates_config_path (str): Path message_templates.yaml
         """
-        self.token = token
-        self.notion_service = notion_service  # Dipendenza esplicita e obbligatoria
+        self.token = token or proteus.get('TELEGRAM.BOT_TOKEN')
+        self.notion_service = notion_service
         
-        # Carica configurazioni
-        if groups_config_path is None:
-            groups_config_path = os.path.join(os.path.dirname(__file__), '../../config/telegram_groups.json')
-        self.groups = self._load_groups_config(groups_config_path)
-        
-        if templates_config_path is None:
-            templates_config_path = os.path.join(os.path.dirname(__file__), '../../config/message_templates.yaml')
-        self.templates = self._load_message_templates(templates_config_path)
+        # Carica configurazioni da Proteus (già caricate in config.py)
+        # Il namespace 'telegram.groups' contiene i dati del file JSON
+        self.groups = proteus.get('telegram.groups', {})
+        # Rimuoviamo commenti se presenti nel dizionario caricato
+        if '_comment' in self.groups:
+            del self.groups['_comment']
+            
+        # Il namespace 'telegram.templates' contiene i dati del file YAML
+        self.templates = proteus.get('telegram.templates', {})
+        if not self.templates:
+            logger.warning("Template Telegram non trovati in Proteus, uso fallback")
+            self.templates = self._get_fallback_templates()
         
         # Componenti helper
         self.formatter = TelegramFormatter(self.templates)
         self.commands = TelegramCommands(self)
-        # ✅ NotionService configurato subito nei comandi (no setter separato)
         self.commands.notion_service = notion_service
         
-        logger.debug(f"TelegramService inizializzato | Gruppi configurati: {len(self.groups)} | NotionService: OK")
-    
-    # ===============================
-    # CONFIGURAZIONE
-    # ===============================
-    
-    def _load_groups_config(self, config_path: str) -> Dict[str, str]:
-        """Carica configurazione gruppi Telegram da file JSON."""
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                # Rimuovi commenti se presenti
-                if '_comment' in config:
-                    del config['_comment']
-                logger.info(f"Configurazione gruppi Telegram caricata | Gruppi: {len(config)}")
-                return config
-        except FileNotFoundError:
-            logger.warning(f"File configurazione gruppi non trovato: {config_path}")
-            return {}
-        except json.JSONDecodeError as e:
-            logger.error(f"Errore parsing configurazione gruppi: {e}")
-            return {}
-    
-    def _load_message_templates(self, templates_path: str) -> Dict:
-        """Carica template messaggi da file YAML."""
-        try:
-            with open(templates_path, 'r', encoding='utf-8') as f:
-                templates = yaml.safe_load(f)
-                logger.info(f"Template messaggi YAML caricati | Path: {templates_path}")
-                return templates
-        except FileNotFoundError:
-            logger.warning(f"File template non trovato, uso fallback | Path: {templates_path}")
-            return self._get_fallback_templates()
-        except yaml.YAMLError as e:
-            logger.error(f"Errore parsing template YAML: {e}")
-            return self._get_fallback_templates()
-    
-    def _get_fallback_templates(self) -> Dict:
-        """Template di fallback se il file YAML non è disponibile."""
-        logger.info("Utilizzo template fallback incorporati (hardcoded)")
-        return {
-            'training_notification': {
-                'telegram': {
-                    'main_group': """🌐 <b>Nuova formazione!</b>
-
-📚 <b>Argomento:</b> {nome}
-🏢 <b>Area:</b> {area}
-📅 <b>Data e ora:</b> {data_ora}
-🔗 <b>Link Teams:</b> <a href="{link_teams}">Partecipa qui</a>
-🏷 <b>Codice:</b> <code>{codice}</code>
-
-💡 <i>Salva il codice per il feedback post-formazione!</i>""",
-                    
-                    'area_group': """📅 <b>Nuova formazione per {area}!</b>
-
-📚 <b>Argomento:</b> {nome}
-📅 <b>Data e ora:</b> {data_ora}
-🔗 <b>Link Teams:</b> <a href="{link_teams}">Partecipa qui</a>
-🏷 <b>Codice:</b> <code>{codice}</code>
-
-✅ <i>Ricordati di partecipare e salvare il codice per il feedback!</i>"""
-                }
-            },
-            'feedback_request': {
-                'telegram': {
-                    'message': """📝 <b>Feedback richiesto!</b>
-
-📚 <b>Formazione:</b> {nome}
-🏢 <b>Area:</b> {area}
-🏷 <b>Codice:</b> <code>{codice}</code>
-
-👆 <b><a href="{feedback_link}">Clicca qui per lasciare il tuo feedback</a></b>
-
-⏰ <i>Ti servono solo 2 minuti per aiutarci a migliorare!</i>"""
-                }
-            }
-        }
+        logger.debug(f"TelegramService inizializzato via Proteus | Gruppi: {len(self.groups)}")
     
     # ===============================
     # LOGICA TARGETING E FORMATTAZIONE MESSAGGI
@@ -630,25 +559,20 @@ if __name__ == "__main__":
     ESECUZIONE:
         python app/services/telegram_service.py
     """
-    import os
-    from dotenv import load_dotenv
-    
-    # Caricamento variabili ambiente
-    load_dotenv()
-    
-    # Configurazione di esempio da environment
-    config = {
-        'TELEGRAM_BOT_TOKEN': os.getenv('TELEGRAM_BOT_TOKEN'),
-        'TELEGRAM_GROUPS_CONFIG': 'config/telegram_groups.json',
-        'TELEGRAM_TEMPLATES_CONFIG': 'config/message_templates.yaml'
-    }
+    from config import proteus
     
     async def main():
         """Funzione principale demo."""
+        # Ottieni istanza NotionService (necessaria per il bot)
+        from app.services.notion import NotionService
+        notion_service = NotionService()
         
         try:
-            # Creazione servizio da configurazione
-            service = create_telegram_service_from_config(config)
+            # Creazione servizio pescando tutto da Proteus
+            service = TelegramService(
+                token=proteus.get('TELEGRAM.BOT_TOKEN'),
+                notion_service=notion_service
+            )
             logger.info(f"TelegramService creato con {len(service.groups)} gruppi")
             
         except ValueError as e:

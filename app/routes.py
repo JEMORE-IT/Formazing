@@ -15,7 +15,7 @@ from app.services.auth_sso import AuthService, login_required, admin_required
 from app.services.notion import NotionServiceError
 from app.services.training_service import TrainingService, TrainingServiceError
 from app.services.analytics_service import AnalyticsService
-from config import Config
+from config import proteus
 import logging
 import yaml
 import os
@@ -62,7 +62,8 @@ def auth_callback():
     
     # 1. Validazione Dominio
     domain = email.split('@')[-1] if '@' in email else ''
-    if domain not in Config.ALLOWED_DOMAINS:
+    allowed_domains = proteus.get('AUTH.ALLOWED_DOMAINS', 'jemore.it').split(',')
+    if domain not in allowed_domains:
         logger.warning(f"Accesso negato: dominio '{domain}' non autorizzato per {email}")
         return render_template('pages/error.html', 
                              message="Dominio non autorizzato. Usa l'account JEMORE.",
@@ -72,11 +73,12 @@ def auth_callback():
     session['user'] = id_token_claims
     
     # 3. RBAC: Controllo se Admin
-    is_admin = email in [a.lower() for a in Config.ADMIN_USERS]
+    admin_users = proteus.get('AUTH.ADMIN_USERS', '').split(',')
+    is_admin = email in [a.lower().strip() for a in admin_users]
     session['is_admin'] = is_admin
     
     logger.info(f"Utente loggato: {email} | Admin: {is_admin}")
-    flash(f"✅ Benvenuto, {id_token_claims.get('name')}!", "success")
+    flash(f"Benvenuto, {id_token_claims.get('name')}!", "success")
     
     return redirect(url_for('main.dashboard'))
 
@@ -169,15 +171,12 @@ async def dashboard():
 @main.route('/guida')
 @login_required
 def guida():
-    """Pagina Tutorial e FAQ con dati da YAML."""
-    try:
-        faq_path = os.path.join(Config.BASE_DIR, 'config', 'faqs.yaml')
-        with open(faq_path, 'r', encoding='utf-8') as f:
-            faq_data = yaml.safe_load(f)
-        faqs = faq_data.get('faqs', [])
-    except Exception as e:
-        logger.error(f"Errore caricamento FAQ: {e}")
-        faqs = []
+    """Pagina Tutorial e FAQ con dati da Proteus."""
+    # Recuperiamo le FAQ dal namespace 'app.guide' caricato in config.py
+    faqs = proteus.get('app.guide.faqs', [])
+    
+    if not faqs:
+        logger.warning("FAQ non trovate in Proteus namespace 'app.guide.faqs'")
         
     return render_template('pages/guida.html', 
                          title='Guida - Formazing',
@@ -211,8 +210,12 @@ async def analytics():
         analytics_service = AnalyticsService()
         analytics_data = analytics_service.get_analytics_data(dashboard_data)
         
+        # Recupero link dashboard esterna (Excel) da Proteus
+        feedback_url = proteus.get('APP.LINKS.FEEDBACK_DASHBOARD')
+        
         return render_template('pages/analytics.html',
                              data=analytics_data,
+                             feedback_dashboard_url=feedback_url,
                              title='Analytics - Formazing')
                              
     except Exception as e:
@@ -350,7 +353,7 @@ async def confirm_notification(training_id):
         # Invalida la cache dei dati dashboard
         cache.delete('dashboard_data_notion')
         
-        flash('✅ Comunicazione inviata con successo! La formazione è stata calendarizzata.', 'success')
+        flash('Comunicazione inviata con successo! La formazione è stata calendarizzata.', 'success')
         return redirect(url_for('main.dashboard'))
         
     except TrainingServiceError as e:
@@ -391,7 +394,7 @@ async def confirm_feedback(training_id):
         # Invalida la cache dei dati dashboard
         cache.delete('dashboard_data_notion')
         
-        flash('✅ Richiesta feedback inviata con successo! La formazione è stata conclusa.', 'success')
+        flash('Richiesta feedback inviata con successo! La formazione è stata conclusa.', 'success')
         return redirect(url_for('main.dashboard'))
         
     except TrainingServiceError as e:

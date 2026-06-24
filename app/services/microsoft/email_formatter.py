@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
 
+from config import proteus
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,41 +36,23 @@ class EmailFormatter:
         Args:
             template_path: Path al file YAML template (default: config/calendar_templates.yaml)
         """
-        if template_path is None:
-            # Default path relativo alla root del progetto
-            base_path = Path(__file__).parent.parent.parent.parent
-            template_path = base_path / "config" / "calendar_templates.yaml"
+        # Carica da Proteus (namespace microsoft.templates caricato in config.py)
+        self.templates = proteus.get('microsoft.templates', {})
+        if not self.templates:
+             logger.warning("Template Microsoft non trovati in Proteus, uso fallback")
+             self.templates = self._get_fallback_templates()
         
-        self.template_path = Path(template_path)
-        self.templates = self._load_templates()
-        logger.debug(f"EmailFormatter inizializzato | Template: {self.template_path}")
+        logger.debug("EmailFormatter inizializzato via Proteus")
+
     
-    def _load_templates(self) -> Dict:
-        """
-        Carica i template dal file YAML.
-        
-        Returns:
-            Dict con i template caricati
-            
-        Raises:
-            EmailFormatterError: Se il caricamento fallisce
-        """
-        try:
-            with open(self.template_path, 'r', encoding='utf-8') as f:
-                templates = yaml.safe_load(f)
-            
-            logger.debug(f"Templates caricati | Keys: {list(templates.keys())}")
-            return templates
-            
-        except FileNotFoundError:
-            logger.error(f"Template file non trovato | Path: {self.template_path}")
-            raise EmailFormatterError(f"Template file not found: {self.template_path}")
-        except yaml.YAMLError as e:
-            logger.error(f"YAML parsing error | Error: {e}")
-            raise EmailFormatterError(f"Invalid YAML in template file: {e}")
-        except Exception as e:
-            logger.error(f"Errore caricamento templates | Error: {e}")
-            raise EmailFormatterError(f"Failed to load templates: {e}")
+    def _get_fallback_templates(self) -> Dict:
+        """Template di fallback basici."""
+        return {
+            'calendar_event': {
+                'subject': "🎯 Formazione: {Nome}",
+                'body': "Nuova formazione programmata!\n\nNome: {Nome}\nCodice: {Codice}\nData: {Data}\nArea: {Area}"
+            }
+        }
     
     def _format_date(self, date_value) -> str:
         """
