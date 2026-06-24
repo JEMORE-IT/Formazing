@@ -19,9 +19,13 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 env_path = os.path.join(BASE_DIR, '.env')
 config_dir = os.path.join(BASE_DIR, 'config')
 
-# 1. Carica variabili d'ambiente (FLASK__, NOTION__, etc.)
+# 1. Carica variabili d'ambiente da file .env
 if os.path.exists(env_path):
     proteus.load(env_path)
+
+# Carica anche le variabili d'ambiente di sistema (es. in produzione/Docker)
+# Questo permette alle variabili in os.environ di sovrascrivere o integrare quelle del file .env
+proteus.load_environ(prefixes=['FLASK_', 'NOTION_', 'TELEGRAM_', 'MICROSOFT_', 'AUTH_', 'LOG_', 'APP_', 'MSAL_'])
 
 # 2. Carica configurazioni JSON/YAML in namespace dedicati
 # Grazie alla nuova feature 'namespace', i file piatti vengono isolati correttamente
@@ -106,3 +110,4 @@ def validate_config() -> dict:
     }
     results['overall_ok'] = all(results.values())
     return results
+
