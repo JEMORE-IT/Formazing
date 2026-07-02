@@ -57,11 +57,10 @@ class TelegramCommands:
         application.add_handler(CommandHandler("settimana", self.command_settimana))
         application.add_handler(CommandHandler("prossima_settimana", self.command_prossima_settimana))
         application.add_handler(CommandHandler("presenze", self.command_presenze))
-        application.add_handler(CommandHandler("presenza", self.command_presenze))  # Alias
         application.add_handler(CommandHandler("help", self.command_help))
         application.add_handler(CommandHandler("start", self.command_help))  # Alias
         
-        logger.info("Command handlers registrati: /oggi, /domani, /settimana, /prossima_settimana, /presenze, /presenza, /help, /start")
+        logger.info("Command handlers registrati: /oggi, /domani, /settimana, /prossima_settimana, /presenze, /help, /start")
     
     # ===============================
     # COMANDI BOT PUBBLICI
@@ -93,7 +92,7 @@ class TelegramCommands:
         Comando /settimana - Mostra tutte le formazioni della settimana (Lun-Dom).
         """
         await self._handle_week_command(update, context, weeks_offset=0, period_name="settimana")
-
+ 
     async def command_prossima_settimana(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Comando /prossima_settimana - Mostra tutte le formazioni della prossima settimana (Lun-Dom).
@@ -102,12 +101,12 @@ class TelegramCommands:
     
     async def command_presenze(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
-        Comando /presenze <codice_formazione> o /presenze <id_notion> - Mostra l'elenco dei partecipanti.
+        Comando /presenze <codice_formazione> - Mostra l'elenco dei partecipanti.
         
         FUNZIONALITÀ:
-        - Recupera il codice/ID passato come argomento.
+        - Recupera il codice passato come argomento.
         - Se non fornito, avvisa l'utente di specificare un codice.
-        - Cerca la formazione per codice o per ID.
+        - Cerca la formazione per codice.
         - Se trovata, restituisce la lista dei partecipanti presenti nella colonna 'Partecipanti'.
         """
         if self.notion_service is None:
@@ -135,20 +134,10 @@ class TelegramCommands:
                 if code.lower() == target_code.lower():
                     target_formazione = f
                     break
-                if f.get('id') == target_code or f.get('_notion_id') == target_code:
-                    target_formazione = f
-                    break
-            
-            # Se non trovata nelle Concluse, prova la ricerca diretta per ID Notion
-            if not target_formazione and len(target_code) >= 32:
-                try:
-                    target_formazione = await self.notion_service.get_formazione_by_id(target_code)
-                except Exception:
-                    pass
             
             if not target_formazione:
                 await update.message.reply_text(
-                    f"❌ Nessuna formazione trovata con il codice o ID: <code>{target_code}</code>",
+                    f"❌ Nessuna formazione trovata con il codice: <code>{target_code}</code>",
                     parse_mode='HTML'
                 )
                 return
@@ -164,7 +153,7 @@ class TelegramCommands:
             message += f"🚦 <b>Stato:</b> {stato}\n\n"
             
             if not partecipanti_str:
-                message += "🤷‍♂️ <i>Nessun partecipante registrato o sincronizzazione Teams non ancora eseguita.</i>"
+                message += "🤷‍♂️ <i>Nessun partecipante registrato.</i>"
             else:
                 partecipanti_list = [p.strip() for p in partecipanti_str.split(',') if p.strip()]
                 message += f"📍 <b>Elenco Partecipanti ({len(partecipanti_list)}):</b>\n"
