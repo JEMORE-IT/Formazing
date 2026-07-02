@@ -175,9 +175,11 @@ class NotionCrudOperations:
         
         Usa la paginazione per garantire di recuperare tutti gli utenti.
         """
+        # 1. Prepariamo due dizionari vuoti per mappare email e nomi ai rispettivi ID Notion
         email_to_id = {}
         name_to_id = {}
         try:
+            # 2. Notion restituisce gli utenti paginati. Usiamo has_more e next_cursor per iterare.
             has_more = True
             next_cursor = None
             
@@ -186,24 +188,26 @@ class NotionCrudOperations:
                 if next_cursor:
                     params['start_cursor'] = next_cursor
                 
-                # Chiamata sincrona all'API utenti di Notion
+                # 3. Chiamata sincrona all'API utenti di Notion per recuperare il blocco corrente
                 response = self.client.users.list(**params)
                 
+                # 4. Scorriamo tutti gli utenti restituiti in questa pagina
                 for user in response.get('results', []):
                     user_id = user.get('id')
                     if not user_id:
                         continue
                     
-                    # Mapping per email
+                    # 5. Se l'utente ha un'email, la mappiamo al suo ID Notion (chiave in minuscolo)
                     email = user.get('person', {}).get('email')
                     if email:
                         email_to_id[email.lower().strip()] = user_id
                     
-                    # Mapping per nome (fallback)
+                    # 6. Mappiamo anche il nome (come fallback di emergenza se l'email non corrisponde)
                     name = user.get('name')
                     if name:
                         name_to_id[name.lower().strip()] = user_id
                 
+                # 7. Controlliamo se ci sono altre pagine da caricare
                 has_more = response.get('has_more', False)
                 next_cursor = response.get('next_cursor')
                 
@@ -212,6 +216,7 @@ class NotionCrudOperations:
         except Exception as e:
             logger.error(f"Errore nel recupero degli utenti Notion: {e}")
             
+        # 8. Restituiamo le mappe popolate
         return email_to_id, name_to_id
 
     async def update_multiple_fields(self, notion_id: str, updates: Dict) -> bool:
