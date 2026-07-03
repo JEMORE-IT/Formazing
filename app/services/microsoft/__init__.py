@@ -285,8 +285,37 @@ class MicrosoftService:
             }
             
         except (GraphClientError, Exception) as e:
+            err_str = str(e)
             logger.error(f"Errore recupero presenze Teams per meeting | Error: {e}")
-            raise MicrosoftServiceError(f"Impossibile recuperare il report presenze: {str(e)}")
+            
+            # Messaggi di errore parlanti per utenti non tecnici
+            if "3004" in err_str or "Specified meeting is not found" in err_str:
+                user_msg = (
+                    "Riunione non trovata su Microsoft Teams. "
+                    "Verifica che il link Teams presente in Notion sia corretto, che l'evento non sia stato eliminato "
+                    "dal calendario e che la chiamata sia stata effettivamente avviata ed utilizzata."
+                )
+            elif "3003" in err_str or "User does not have access to lookup meeting" in err_str:
+                user_msg = (
+                    "Accesso negato alla riunione. "
+                    "Assicurati che la riunione Teams sia stata organizzata dall'utente configurato nel file .env "
+                    "e che l'applicazione abbia le autorizzazioni per accedere ai suoi meeting."
+                )
+            elif "Insufficient privileges" in err_str:
+                user_msg = (
+                    "Privilegi insufficienti su Microsoft Graph. "
+                    "Verifica che l'applicazione abbia il permesso applicativo 'User.Read.All' "
+                    "con consenso dell'amministratore concesso nel portale Azure."
+                )
+            elif "No application access policy found" in err_str:
+                user_msg = (
+                    "Policy di accesso mancante in Microsoft Teams. "
+                    "L'amministratore IT deve assegnare l'Application Access Policy (tramite PowerShell) all'utente organizzatore."
+                )
+            else:
+                user_msg = f"Errore Microsoft Graph: {err_str}"
+                
+            raise MicrosoftServiceError(user_msg)
 
     def _validate_formazione_data(self, formazione_data: Dict) -> None:
         """
