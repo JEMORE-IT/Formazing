@@ -1,0 +1,380 @@
+{% extends "layout/auth_required.html" %}
+
+{% block page_content %}
+<!-- Diagnostics Header -->
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        {% set title = 'Stato del Sistema' %}
+        {% set subtitle = 'Diagnostica e monitoraggio in tempo reale delle connessioni esterne.' %}
+        {% set icon = 'bi bi-cpu' %}
+        {% include 'atoms/page_header.html' %}
+    </div>
+    <div class="mt-2">
+        <button onclick="window.location.reload();"
+            class="btn btn-sm btn-jemore-dark-blu d-flex align-items-center rounded">
+            <i class="bi bi-arrow-clockwise me-2"></i> Riavvia Diagnostica
+        </button>
+    </div>
+</div>
+
+<!-- 1. NOTION INTEGRATION PANEL (Full Width) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-jemore border-0 shadow-sm bg-white p-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                <h4 class="h5 fw-bold text-blu-jemore mb-0">
+                    <i class="bi bi-journal-text me-2 text-blu-jemore"></i> Database Notion
+                </h4>
+                {% if data.notion.connection_ok and data.notion.valid_structure %}
+                <span
+                    class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Operativo</span>
+                {% elif data.notion.connection_ok %}
+                <span
+                    class="badge bg-warning-subtle text-warning border border-warning border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Attenzione</span>
+                {% else %}
+                <span
+                    class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Errore</span>
+                {% endif %}
+            </div>
+
+            <div class="row g-4">
+                <!-- Notion Stats Summary -->
+                <div class="col-lg-4 border-end-lg">
+                    <h6 class="fw-bold text-muted mb-3 text-uppercase extra-small">Stato Connessione</h6>
+                    <ul class="list-unstyled mb-0 text-muted small">
+                        <li class="mb-3 d-flex justify-content-between">
+                            <span>API Connessione:
+                                <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Verifica che il token di integrazione Notion per accedere al database Planner Formazioni 2.0 sia valido."></i>
+                            </span>
+                            <strong class="{{ 'text-success' if data.notion.connection_ok else 'text-danger' }}">
+                                {{ 'Connesso' if data.notion.connection_ok else 'Disconnesso' }}
+                            </strong>
+                        </li>
+                        <li class="mb-3 d-flex justify-content-between">
+                            <span>Nome Database:</span>
+                            <strong class="text-blu-jemore text-truncate" style="max-width: 180px;"
+                                title="{{ data.notion.database_title }}">{{ data.notion.database_title }}</strong>
+                        </li>
+                        <li class="mb-3 d-flex justify-content-between">
+                            <span>Tempo di risposta:
+                                <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Tempo impiegato dall'API Notion per rispondere alla richiesta. Valori sopra i 2000 ms possono indicare problemi di rete o sovraccarico."></i>
+                            </span>
+                            <strong class="text-dark">{{ data.notion.response_time_ms }} ms</strong>
+                        </li>
+                        <li class="mb-3 d-flex justify-content-between">
+                            <span>Proprietà rilevate:
+                                <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Numero di colonne (proprietà) trovate nel database Notion. Formazing richiede almeno le colonne obbligatorie elencate a destra."></i>
+                            </span>
+                            <strong class="text-dark">{{ data.notion.properties_count }} campi</strong>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span>Struttura colonne:
+                                <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Verifica che tutte le colonne obbligatorie del database siano presenti e abbiano il tipo corretto (es. la colonna 'Stato' deve essere di tipo Status, non Select)."></i>
+                            </span>
+                            <strong class="{{ 'text-success' if data.notion.valid_structure else 'text-warning' }}">
+                                {{ 'Conforme' if data.notion.valid_structure else 'Non Conforme' }}
+                            </strong>
+                        </li>
+                    </ul>
+
+                    {% if data.notion.error %}
+                    <div class="alert alert-danger small mt-4 mb-0 p-3">
+                        <i class="bi bi-x-circle me-1"></i> <strong>Errore Notion:</strong><br>{{ data.notion.error }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Notion Column Checklist Table -->
+                <div class="col-lg-8">
+                    <h6 class="fw-bold text-muted mb-3 text-uppercase extra-small">Verifica Struttura Colonne</h6>
+                    {% if data.notion.connection_ok %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-borderless small mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-2">Nome Campo</th>
+                                    <th>Tipo Richiesto</th>
+                                    <th>Stato Rilevato</th>
+                                    <th class="text-end pe-2">Esito</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set expected_fields = {
+                                'Nome': 'Titolo (title)',
+                                'Area': 'Selezione Multipla (multi_select)',
+                                'Date': 'Data (date)',
+                                'Stato': 'Stato (status)',
+                                'Codice': 'Rich Text (rich_text)',
+                                'Link Teams': 'URL (url)',
+                                'Periodo': 'Selezione Singola (select)',
+                                'Partecipanti': 'Persone (people)',
+                                'Numero Partecipanti': 'Numero (number)',
+                                'Durata': 'Numero (number)'
+                                } %}
+
+                                {% for field, desc in expected_fields.items() %}
+                                {% set prop = data.notion.missing_fields %}
+                                {% set incorrect = data.notion.incorrect_types %}
+                                {% set is_missing = field in prop %}
+
+                                {% set is_incorrect = false %}
+                                {% set actual_type = '' %}
+                                {% for inc in incorrect %}
+                                {% if inc.field == field %}
+                                {% set is_incorrect = true %}
+                                {% set actual_type = inc.actual %}
+                                {% endif %}
+                                {% endfor %}
+
+                                {% set has_warning = false %}
+                                {% set warning_msg = '' %}
+                                {% for warn in data.notion.warnings %}
+                                {% if warn.field == field %}
+                                {% set has_warning = true %}
+                                {% set warning_msg = warn.message %}
+                                {% endif %}
+                                {% endfor %}
+
+                                <tr class="border-bottom">
+                                    <td class="ps-2 fw-bold text-blu-jemore py-2">{{ field }}</td>
+                                    <td class="text-muted">{{ desc }}</td>
+                                    <td>
+                                        {% if is_missing %}
+                                        <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>
+                                            Mancante</span>
+                                        {% elif is_incorrect %}
+                                        <span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                            Tipo errato (rilevato: {{ actual_type }})</span>
+                                        {% elif has_warning %}
+                                        <span class="text-warning"><i class="bi bi-info-circle-fill me-1"></i>
+                                            Inattivo</span>
+                                        {% else %}
+                                        <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>
+                                            Corretto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-2">
+                                        {% if is_missing %}
+                                        <span
+                                            class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-2">ERRORE</span>
+                                        {% elif is_incorrect %}
+                                        <span
+                                            class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-2">ERRORE</span>
+                                        {% elif has_warning %}
+                                        <span
+                                            class="badge bg-warning-subtle text-warning border border-warning border-opacity-25 rounded-pill px-2">WARNING</span>
+                                        {% else %}
+                                        <span
+                                            class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-2">OK</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger mb-0 d-flex align-items-center">
+                        <i class="bi bi-x-octagon-fill me-3 fs-4"></i>
+                        <div>
+                            <strong>Impossibile caricare la struttura delle colonne:</strong> La connessione a Notion
+                            non è attiva.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. MICROSOFT & TELEGRAM PANELS (Side by Side) -->
+<div class="row g-4 mb-5">
+    <!-- MICROSOFT GRAPH CARD -->
+    <div class="col-md-6">
+        <div class="card-jemore border-0 shadow-sm bg-white p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                <h4 class="h5 fw-bold text-blu-jemore mb-0">
+                    <i class="bi bi-microsoft me-2 text-blu-jemore"></i> Microsoft Graph
+                </h4>
+                {% if data.microsoft.authenticated and data.microsoft.user_resolved %}
+                <span
+                    class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Operativo</span>
+                {% else %}
+                <span
+                    class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Errore</span>
+                {% endif %}
+            </div>
+
+            {% if data.microsoft.error %}
+            <div class="alert alert-danger small p-3 mb-3">
+                <i class="bi bi-x-circle-fill me-1"></i> <strong>Dettaglio Errore:</strong> {{ data.microsoft.error }}
+            </div>
+            {% endif %}
+
+            <table class="table table-sm table-borderless small mb-0">
+                <tbody>
+                    <tr>
+                        <td class="text-muted w-35 pb-3">
+                            GUID Organizzatore:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="L'ID univoco (GUID) dell'utente organizzatore su Azure AD, ricavato dall'email configurata in MICROSOFT__USER_EMAIL. Questo GUID viene usato internamente per creare le riunioni Teams a nome di quella casella email."></i>
+                        </td>
+                        <td class="text-blu-jemore fw-bold pb-3">
+                            <code>{{ data.microsoft.user_guid if data.microsoft.authenticated else 'Non autenticato' }}</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pb-3">
+                            Email Organizzatore:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="La casella email configurata in MICROSOFT__USER_EMAIL nel .env. Tutte le riunioni Teams vengono create a nome di questa casella."></i>
+                        </td>
+                        <td class="pb-3">
+                            <span class="text-dark">{{ data.microsoft.configured_email }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pb-3">
+                            Stato Access Policy:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Verifica che l'applicazione abbia l'Application Access Policy configurata in Exchange Online (tramite PowerShell). Senza questa policy, l'app non può accedere al calendario e ai meeting di questa casella email."></i>
+                        </td>
+                        <td class="pb-3">
+                            {% if data.microsoft.user_resolved %}
+                            <span class="text-success fw-bold"><i class="bi bi-shield-check-fill me-1"></i> Autorizzato
+                                (Policy attiva)</span>
+                            {% else %}
+                            <span class="text-danger fw-bold"><i class="bi bi-shield-x-fill me-1"></i> Non
+                                autorizzato</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">
+                            Scadenza Client Secret:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="La data di scadenza della chiave segreta dell'applicazione Azure AD. Dopo questa data, l'app non potrà più autenticarsi e andrà in errore. Va aggiornate nell'env dopo averla ricreata su Azure."></i>
+                        </td>
+                        <td>
+                            {% if data.microsoft.secret_days_remaining != 9999 %}
+                            {% if data.microsoft.secret_days_remaining <= 30 %} <span
+                                class="badge bg-warning-subtle text-warning border border-warning border-opacity-25 rounded-pill px-3 py-1 fw-bold">
+                                {{ data.microsoft.secret_expiry }} (Scade tra {{ data.microsoft.secret_days_remaining }}
+                                giorni!)
+                                </span>
+                                {% else %}
+                                <span
+                                    class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-3 py-1 fw-bold">
+                                    {{ data.microsoft.secret_expiry }} (Valido per {{
+                                    data.microsoft.secret_days_remaining }} giorni)
+                                </span>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">Variabile MICROSOFT__SECRET_EXPIRY non definita in .env</span>
+                                {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TELEGRAM BOT CARD -->
+    <div class="col-md-6">
+        <div class="card-jemore border-0 shadow-sm bg-white p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                <h4 class="h5 fw-bold text-blu-jemore mb-0">
+                    <i class="bi bi-telegram me-2 text-blu-jemore"></i> Bot Telegram
+                </h4>
+                {% if data.telegram.connected %}
+                <span
+                    class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Operativo</span>
+                {% else %}
+                <span
+                    class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1 text-uppercase extra-small fw-bold">Scollegato</span>
+                {% endif %}
+            </div>
+
+            {% if data.telegram.error %}
+            <div class="alert alert-danger small p-3 mb-3">
+                <i class="bi bi-x-circle-fill me-1"></i> <strong>Dettaglio Errore:</strong> {{ data.telegram.error }}
+            </div>
+            {% endif %}
+
+            <table class="table table-sm table-borderless small mb-0">
+                <tbody>
+                    <tr>
+                        <td class="text-muted w-35 pb-3">
+                            Bot ID:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="L'ID numerico univoco del bot su Telegram. Assegnato da BotFather al momento della creazione del bot."></i>
+                        </td>
+                        <td class="pb-3">
+                            <code>{{ data.telegram.bot_info.id if data.telegram.connected else 'N/A' }}</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pb-3">
+                            Username:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Il nome utente pubblico del bot su Telegram (quello con la @). Gli utenti possono cercarlo e aggiungerlo ai gruppi tramite questo nome."></i>
+                        </td>
+                        <td class="pb-3 text-blu-jemore fw-bold">{{ '@' ~ data.telegram.bot_info.username if
+                            data.telegram.connected else 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pb-3">Nome Visualizzato:</td>
+                        <td class="pb-3">{{ data.telegram.bot_info.first_name if data.telegram.connected else 'N/A' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pb-3">
+                            Gruppi configurati:
+                            <i class="bi bi-question-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Il numero di chat di gruppo definite nel file telegram_groups.json. Il bot può inviare messaggi solo ai gruppi in questa lista. Gli allarmi di diagnostica vengono inviati al gruppo 'main_group'."></i>
+                        </td>
+                        <td class="pb-3">
+                            <span class="badge bg-blu-jemore">{{ data.telegram.groups_count }} gruppi attivi</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Comandi Bot:</td>
+                        <td>
+                            <code>/oggi, /domani, /settimana, /presenze, /test_diagnostica, /help</code>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.LoadingOverlay) LoadingOverlay.hide();
+
+        // Inizializza tutti i tooltip Bootstrap 5
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el, { trigger: 'hover' });
+        });
+    });
+</script>
+{% endblock %}

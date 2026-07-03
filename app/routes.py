@@ -183,6 +183,25 @@ def guida():
                          faqs=faqs)
 
 
+@main.route('/diagnostica')
+@admin_required
+async def diagnostica():
+    """Pagina di stato e diagnostica in tempo reale del sistema."""
+    try:
+        training_service = TrainingService.get_instance()
+        diagnostics_data = await training_service.run_system_diagnostics()
+        
+        return render_template('pages/diagnostica.html',
+                             title='Stato del Sistema - Formazing',
+                             data=diagnostics_data)
+                             
+    except Exception as e:
+        logger.error(f"Errore caricamento pagina diagnostica: {e}", exc_info=True)
+        flash(f"Impossibile caricare la diagnostica: {e}", 'error')
+        return redirect(url_for('main.dashboard'))
+
+
+
 @main.route('/analytics')
 @login_required
 async def analytics():
