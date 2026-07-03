@@ -403,18 +403,56 @@ class TelegramService:
         - Gestione automatica event loop asyncio
         - Gestione CTRL+C per shutdown pulito
         - Mantiene bot attivo fino a interruzione utente
-        
-        PROCESSO:
-        1. Crea event loop asyncio
-        2. Avvia bot con start_bot()
-        3. Mantiene esecuzione con Event().wait()
-        4. Gestisce KeyboardInterrupt per shutdown graceful
-        5. Chiama stop_bot() nel finally
-        
-        ESEMPIO USO:
-            service = TelegramService(token="...")
-            service.run_bot_sync()  # Bot resta attivo fino a CTRL+C
         """
+        async def check_system_health_job(context):
+            try:
+                from app.services.training_service import TrainingService
+                ts = TrainingService.get_instance()
+                report = await ts.run_system_diagnostics()
+                
+                issues = []
+                
+                # 1. Notion checks
+                if not report['notion']['connection_ok']:
+                    issues.append("🔴 <b>Notion API:</b> Connessione fallita.")
+                elif not report['notion']['valid_structure']:
+                    missing = ", ".join(report['notion']['missing_fields'])
+                    issues.append(f"🔴 <b>Notion Database:</b> Campi obbligatori mancanti: {missing}.")
+                    
+                # 2. Microsoft checks
+                if not report['microsoft']['authenticated']:
+                    issues.append("🔴 <b>Microsoft Graph:</b> Autenticazione app fallita.")
+                elif not report['microsoft']['user_resolved']:
+                    issues.append("🔴 <b>Microsoft Graph:</b> Impossibile risolvere il GUID dell'organizzatore.")
+                
+                # Secret expiry check
+                secret_days = report['microsoft']['secret_days_remaining']
+                if secret_days != 9999:
+                    if secret_days <= 0:
+                        issues.append("🔴 <b>Microsoft Secret:</b> Il Client Secret configurato è SCADUTO.")
+                    elif secret_days <= 30:
+                        issues.append(f"🟡 <b>Microsoft Secret:</b> Il Client Secret scadrà tra {secret_days} giorni. Rinnovalo su Azure AD per evitare interruzioni.")
+                        
+                # 3. Telegram checks
+                if not report['telegram']['connected']:
+                    issues.append("🔴 <b>Telegram Bot:</b> Connessione API fallita.")
+                    
+                if issues:
+                    alert_msg = (
+                        "⚠️ <b>Allerta Diagnostica Formazing</b>\n\n"
+                        "Sono state rilevate le seguenti anomalie di sistema:\n\n" +
+                        "\n".join(issues) +
+                        "\n\n🔗 <i>Accedi alla Dashboard <a href='http://localhost:5001/diagnostica'>Stato del Sistema</a> per maggiori dettagli.</i>"
+                    )
+                    # Invia il messaggio al gruppo principale
+                    await ts.telegram_service.send_message_to_group('main_group', alert_msg)
+                    logger.info("Inviato messaggio di allerta diagnostica su Telegram.")
+                else:
+                    logger.info("Diagnostica periodica completata: sistema sano.")
+                    
+            except Exception as job_err:
+                logger.error(f"Errore nell'esecuzione del job di diagnostica: {job_err}", exc_info=True)
+
         async def main():
             # Crea l'Application instance qui, solo per il processo del bot
             application = Application.builder().token(self.token).build()
@@ -422,6 +460,18 @@ class TelegramService:
             # Registra i comandi sull'istanza dell'applicazione
             self.commands.register_handlers(application)
             logger.info("Comandi bot configurati per il processo di polling.")
+            
+            # Configura il job di diagnostica periodico (ogni giorno alle 08:00 del mattino)
+            if application.job_queue:
+                from datetime import time
+                application.job_queue.run_daily(
+                    check_system_health_job,
+                    time=time(hour=8, minute=0, second=0),
+                    name='system_health_check'
+                )
+                logger.info("Job di monitoraggio diagnostica registrato con successo (giornaliero alle 08:00).")
+            else:
+                logger.warning("JobQueue di python-telegram-bot non disponibile. Allarmi periodici disattivati.")
 
             try:
                 logger.info("Avvio del bot Telegram in modalit polling...")
