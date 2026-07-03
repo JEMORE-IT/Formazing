@@ -397,7 +397,7 @@ class TelegramService:
         UTILIZZO:
         - Script standalone per testing bot comandi
         - Debugging interattivo senza applicazione Flask
-        - Demo o prototipazione funzionalità bot
+        - Prototipazione funzionalità bot
         
         FUNZIONALITÀ:
         - Gestione automatica event loop asyncio
@@ -480,14 +480,37 @@ class TelegramService:
                 await application.updater.start_polling()
                 logger.info("Bot Telegram avviato con successo e in ascolto comandi.")
                 
+                # Notifica avvio sul gruppo principale
+                try:
+                    online_msg = (
+                        "🟢 <b>Formazing — Online</b>\n\n"
+                        "Il bot è stato (ri)avviato ed è pronto a ricevere comandi.\n"
+                    )
+                    await self.send_message_to_group('main_group', online_msg)
+                    logger.info("Messaggio di avvio inviato al gruppo principale.")
+                except Exception as notify_err:
+                    logger.warning(f"Impossibile inviare messaggio di avvio: {notify_err}")
+
                 # Mantieni il processo in vita
                 await asyncio.Event().wait()
-
+ 
             except (KeyboardInterrupt, SystemExit):
                 logger.info("Interruzione ricevuta, avvio spegnimento pulito del bot...")
             
             finally:
-                if application.updater and application.updater.is_running:
+                # Notifica spegnimento sul gruppo principale prima di chiudere la connessione
+                try:
+                    offline_msg = (
+                        "🔴 <b>Formazing — Offline</b>\n\n"
+                        "Formazing è down, probabilmente per manutenzioni varie, se così non dovesse essere chiama l'adulto più vicino.\n"
+                        "<i>I vari comandi non saranno disponibili fino al riavvio.</i>"
+                    )
+                    await self.send_message_to_group('main_group', offline_msg)
+                    logger.info("Messaggio di offline inviato al gruppo principale.")
+                except Exception as notify_err:
+                    logger.warning(f"Impossibile inviare messaggio di offline: {notify_err}")
+                
+                if application.updater and application.updater.running:
                     await application.updater.stop()
                 if application.running:
                     await application.stop()
