@@ -160,3 +160,58 @@ class GraphClient:
         except Exception as e:
             logger.error(f"Request error | Error: {e}")
             raise GraphClientError(f"Request failed: {str(e)}")
+
+    def get_token_status(self) -> dict:
+        """
+        Restituisce lo stato del token di autenticazione Microsoft Graph.
+        """
+        if not self._access_token or not self._token_expiry:
+            return {
+                'active': False,
+                'expiry': None,
+                'seconds_remaining': 0
+            }
+        
+        from datetime import datetime
+        now = datetime.now()
+        remaining = int((self._token_expiry - now).total_seconds())
+        return {
+            'active': remaining > 0,
+            'expiry': self._token_expiry.strftime('%Y-%m-%d %H:%M:%S'),
+            'seconds_remaining': max(0, remaining)
+        }
+
+    def check_connection(self) -> dict:
+        """
+        Esegue un health check della connessione Microsoft Graph API.
+        """
+        result = {
+            'authenticated': False,
+            'user_resolved': False,
+            'user_guid': None,
+            'token_info': None,
+            'error': None
+        }
+        
+        try:
+            # 1. Verifica acquisizione token
+            self._get_access_token()
+            result['authenticated'] = True
+            result['token_info'] = self.get_token_status()
+            
+            # 2. Verifica risoluzione dell'utente configurato
+            if self.user_email:
+                try:
+                    guid = self.get_user_guid()
+                    result['user_resolved'] = True
+                    result['user_guid'] = guid
+                except Exception as user_err:
+                    result['error'] = f"Errore risoluzione utente: {user_err}"
+            else:
+                result['error'] = "Email utente (MICROSOFT_USER_EMAIL) non configurata"
+                
+        except Exception as e:
+            result['error'] = str(e)
+            
+        return result
+

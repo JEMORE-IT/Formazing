@@ -351,6 +351,13 @@ class MicrosoftService:
             'template_path': str(self.email_formatter.template_path),
             'areas_configured': len(self.calendar_operations.area_emails)
         }
+        
+    def get_diagnostics_info(self) -> Dict:
+        """
+        Ottiene i dettagli diagnostici completi per Microsoft Graph.
+        """
+        return self.graph_client.check_connection()
+
 
 
 # Export pubblico
