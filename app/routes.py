@@ -407,7 +407,7 @@ async def confirm_feedback(training_id):
         return redirect(url_for('main.dashboard'))
 
 
-@main.route('/sync-attendance/<training_id>', methods=['POST'])
+@main.route('/sync-attendance/<training_id>', methods=['GET', 'POST'])
 @admin_required
 async def sync_attendance(training_id):
     """Sincronizza manualmente i partecipanti da Teams per una formazione conclusa."""

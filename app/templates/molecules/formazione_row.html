@@ -136,12 +136,16 @@
 
     if (typeof triggerSync !== 'function') {
         window.triggerSync = function (trainingId) {
-            LoadingOverlay.show('Sincronizzazione Presenze', 'Connessione a Microsoft Graph e recupero report presenze da Teams...');
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/sync-attendance/${trainingId}`;
-            document.body.appendChild(form);
-            form.submit();
+            // Nasconde le azioni per feedback immediato
+            const actionsEl = document.getElementById(`actions-${trainingId}`);
+            if (actionsEl) actionsEl.classList.add('d-none');
+            
+            const targetUrl = `/sync-attendance/${trainingId}`;
+            const title = 'Sincronizzazione Presenze';
+            const message = 'Connessione a Microsoft Graph e recupero report presenze da Teams...';
+            
+            const loadingUrl = `/loading?next=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(title)}&message=${encodeURIComponent(message)}`;
+            window.location.href = loadingUrl;
         };
     }
 </script>
