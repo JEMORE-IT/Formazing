@@ -91,6 +91,39 @@ class TelegramService:
         
         logger.debug(f"TelegramService inizializzato via Proteus | Gruppi: {len(self.groups)}")
     
+    def check_connection(self) -> dict:
+        """
+        Esegue un health check per il bot Telegram.
+        """
+        result = {
+            'configured': bool(self.token),
+            'connected': False,
+            'bot_info': None,
+            'error': None
+        }
+        
+        if not self.token:
+            result['error'] = "Token bot Telegram non configurato in .env"
+            return result
+            
+        import requests
+        try:
+            url = f"https://api.telegram.org/bot{self.token}/getMe"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('ok'):
+                    result['connected'] = True
+                    result['bot_info'] = data.get('result', {})
+                else:
+                    result['error'] = f"Errore risposta Telegram: {data.get('description')}"
+            else:
+                result['error'] = f"Errore HTTP Telegram: {response.status_code} - {response.text}"
+        except Exception as e:
+            result['error'] = f"Impossibile connettersi alle API di Telegram: {e}"
+            
+        return result
+    
     # ===============================
     # LOGICA TARGETING E FORMATTAZIONE MESSAGGI
     # ===============================
