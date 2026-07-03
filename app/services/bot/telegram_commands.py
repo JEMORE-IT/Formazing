@@ -143,22 +143,39 @@ class TelegramCommands:
                 return
                 
             nome = target_formazione.get('Nome', 'N/A')
-            codice = target_formazione.get('Codice', 'N/A')
-            stato = target_formazione.get('Stato', 'N/A')
+            durata = target_formazione.get('Durata')
+            num_part = target_formazione.get('Numero Partecipanti')
             partecipanti_str = target_formazione.get('Partecipanti', '').strip()
             
-            message = f"👥 <b>PRESENZE PER LA FORMAZIONE:</b>\n"
-            message += f"📘 <b>Nome:</b> {nome}\n"
-            message += f"🏷 <b>Codice:</b> <code>{codice}</code>\n"
-            message += f"🚦 <b>Stato:</b> {stato}\n\n"
+            message = f"<b>PRESENZE FORMAZIONE</b>\n"
+            message += f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            message += f"<b>Corso:</b> {nome}\n"
             
-            if not partecipanti_str:
-                message += "🤷‍♂️ <i>Nessun partecipante registrato.</i>"
-            else:
+            if durata is not None:
+                message += f"<b>Durata:</b> {durata} ore\n"
+            
+            partecipanti_list = []
+            if partecipanti_str:
                 partecipanti_list = [p.strip() for p in partecipanti_str.split(',') if p.strip()]
-                message += f"📍 <b>Elenco Partecipanti ({len(partecipanti_list)}):</b>\n"
+                
+            if num_part is not None:
+                message += f"<b>Partecipanti:</b> {int(num_part)} totali ({len(partecipanti_list)} registrati su Notion)\n"
+            else:
+                message += f"<b>Partecipanti registrati:</b> {len(partecipanti_list)}\n"
+                
+            message += f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            
+            if not partecipanti_list:
+                message += "<i>Nessun partecipante registrato.</i>"
+            else:
+                message += f"<b>ELENCO PARTECIPANTI:</b>\n"
                 for i, p in enumerate(partecipanti_list, 1):
-                    message += f"{i}. {p}\n"
+                    # Mostra solo il nome pulito senza l'email
+                    p_name = p.split(' (')[0]
+                    message += f"  {i}. {p_name}\n"
+                
+                if num_part is not None and int(num_part) > len(partecipanti_list):
+                    message += f"\n<i>Nota: La differenza tra partecipanti totali e registrati è dovuta a utenti esterni o non iscritti a Notion.</i>"
             
             await update.message.reply_text(message, parse_mode='HTML')
             
