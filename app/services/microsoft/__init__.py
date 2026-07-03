@@ -251,7 +251,10 @@ class MicrosoftService:
                     start_dt = datetime.fromisoformat(meeting_start.replace('Z', '+00:00'))
                     end_dt = datetime.fromisoformat(meeting_end.replace('Z', '+00:00'))
                     duration_seconds = (end_dt - start_dt).total_seconds()
-                    duration_hours = max(0.0, round(duration_seconds / 3600.0, 2))
+                    raw_hours = duration_seconds / 3600.0
+                    duration_hours = round(raw_hours * 2) / 2
+                    if duration_seconds > 0 and duration_hours == 0.0:
+                        duration_hours = 0.5
                 except Exception as ex:
                     logger.error(f"Errore parsing orari meeting per durata: {ex}")
             
