@@ -223,6 +223,64 @@
                                 funzionamento del bot.</p>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="card-jemore h-100 border-start border-danger border-4 p-3 shadow-none bg-light">
+                            <h5 class="fw-bold text-blu-jemore">/test_diagnostica</h5>
+                            <p class="small text-muted mb-0">Avvia manualmente un controllo completo dell'integrità del
+                                sistema (connessioni Notion, Microsoft Graph, Telegram). Risponde direttamente in chat
+                                con l'esito. Utile per diagnosticare rapidamente problemi tecnici.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-light rounded border border-light-subtle small text-muted">
+                    <i class="bi bi-info-circle-fill text-blu-jemore me-2"></i>
+                    <strong>Messaggi automatici del Bot:</strong> Quando il bot viene (ri)avviato, invia automaticamente
+                    un messaggio 🟢 <em>Online</em>. <br>
+                    Quando invece viene spento, invia un messaggio 🔴 <em>Offline</em> per avvisare che i comandi
+                    non saranno disponibili fino al riavvio. <br>
+                    Questi messaggi sono puramente informativi.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stato del Sistema -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-jemore shadow-lg-jemore">
+            <div class="card-body p-4">
+                <h2 class="h4 fw-bold text-blu-jemore mb-4">
+                    <i class="bi bi-cpu me-2"></i> Stato del Sistema
+                </h2>
+                <p class="text-blu-jemore mb-3">
+                    Nella barra di navigazione (visibile solo agli amministratori) è presente il link <strong>Stato
+                        Sistema</strong> che apre la pagina di diagnostica in tempo reale.
+                    Ogni campo ha una piccola icona <i class="bi bi-question-circle"></i> che spiega il suo significato
+                    al passaggio del mouse. Questa pagina ti permette di verificare in un colpo d'occhio la salute di
+                    tutte le integrazioni:
+                </p>
+                <ul class="text-blu-jemore mb-4">
+                    <li class="mb-2"><strong>Database Notion:</strong> Verifica la connessione API, il tempo di risposta
+                        e la struttura delle colonne del database. Se una colonna obbligatoria risulta mancante o con il
+                        tipo sbagliato, viene segnalata nella tabella con un indicatore rosso.</li>
+                    <li class="mb-2"><strong>Microsoft Graph:</strong> Controlla che le credenziali Azure AD siano
+                        valide, che l'organizzatore sia risolto e che il Client Secret non stia per scadere. </li>
+                    <li class="mb-2"><strong>Telegram Bot:</strong> Verifica che la connessione al bot sia attiva e
+                        mostra il numero di gruppi configurati.</li>
+                </ul>
+                <p class="text-blu-jemore mb-3">
+                    <strong>Diagnostica automatica:</strong> Il bot esegue ogni giorno alle <strong>08:00</strong> un
+                    controllo automatico di tutti i servizi. Se vengono rilevate anomalie (connessioni ko, colonne
+                    mancanti, Secret in scadenza), il bot invia un messaggio di allerta direttamente sul gruppo
+                    principale con la lista dei problemi riscontrati.
+                </p>
+                <div class="p-3 bg-light rounded border border-light-subtle small text-muted">
+                    <i class="bi bi-info-circle-fill text-blu-jemore me-2"></i>
+                    La diagnostica automatica è <strong>solo informativa</strong>: segnala i problemi ma non li risolve
+                    autonomamente. In caso di allerta, accedi alla pagina Stato del Sistema per i dettagli e contatta il
+                    responsabile tecnico.
                 </div>
             </div>
         </div>
