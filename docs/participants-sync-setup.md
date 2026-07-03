@@ -97,3 +97,40 @@ Una volta completata la configurazione dei permessi Notion e Microsoft, puoi pro
   - La colonna `Partecipanti` mostrerà gli account degli utenti Notion reali abbinati.
   - La colonna `Numero Partecipanti` conterrà il numero totale di presenti (es: `4`).
   - La colonna `Durata` conterrà la durata effettiva calcolata della call (es: `1.5` per 1 ora e 30 minuti).
+
+---
+
+## 4. Logica di Business e Gestione dei Report
+
+Durante la sincronizzazione, Formazing adotta le seguenti logiche per garantire l'integrità dei dati:
+
+### A. Selezione del Report Principale (Riaperture Meeting)
+Se un utente rientra nella riunione Teams dopo la sua conclusione ufficiale, Teams genera nuovi report di presenza distinti e quasi vuoti.
+Per evitare di importare report errati, Formazing **scansiona tutti i report disponibili per il meeting e seleziona automaticamente quello con il maggior numero di partecipanti** (`totalParticipantCount`), ignorando riaperture accidentali del link.
+
+### B. Arrotondamento della Durata
+La durata calcolata viene memorizzata in Notion seguendo queste regole:
+* Viene **arrotondata al multiplo di 0.5 ore più vicino** (es. 1.0h, 1.5h, 2.0h, ecc.).
+* Se la riunione si è tenuta (durata maggiore di zero) ma l'arrotondamento la porterebbe a 0.0, viene forzato un **valore minimo di 0.5 ore** (30 minuti).
+
+---
+
+## 5. Risoluzione dei Problemi Comuni
+
+### Errore 3003: User does not have access to lookup meeting
+* **Causa:** L'organizzatore del meeting Teams non coincide con l'email impostata in `MICROSOFT_USER_EMAIL` nel file `.env`. L'applicazione non ha l'autorizzazione a leggere i meeting di altri utenti.
+* **Soluzione:** 
+  1. Assicurati che il link Teams appartenga a un meeting creato dall'utente configurato nel `.env`.
+  2. In alternativa, se vuoi usare un organizzatore diverso, aggiorna `MICROSOFT_USER_EMAIL` nel `.env` e assegna ad esso la policy in PowerShell:
+     `Grant-CsApplicationAccessPolicy -PolicyName "FormazingSyncPolicy" -Identity "nuovo_utente@domain.com"`
+
+### Errore 3004: Specified meeting is not found
+* **Causa:** Microsoft Graph non trova l'oggetto meeting associato al link. Questo succede se:
+  1. Il meeting non è mai iniziato (nessuno è entrato nella chiamata).
+  2. L'evento è stato eliminato dal calendario dell'organizzatore.
+  3. Il meeting è troppo vecchio: Microsoft Graph cancella i metadati per il lookup dei meeting dopo circa **90 giorni**.
+* **Soluzione:** Verifica che la riunione sia stata effettivamente avviata ed utilizzata dall'organizzatore corretto entro i limiti temporali previsti.
+
+### Errore: Insufficient privileges to complete the operation
+* **Causa:** L'applicazione Azure AD non ha il permesso applicativo **`User.Read.All`** o l'amministratore non ha cliccato su **"Grant admin consent"** nel Portale Azure.
+* **Soluzione:** Segui i passaggi descritti al punto **2.A** e assicurati di vedere lo stato verde di approvazione accanto a tutti i permessi.
