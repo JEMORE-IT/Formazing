@@ -221,8 +221,10 @@ class MicrosoftService:
                     'total_participants': 0
                 }
                 
-            # Prendiamo l'ultimo report generato
-            report_id = reports[-1].get('id')
+            # Trova il report principale con il maggior numero di partecipanti
+            # (evita di selezionare report vuoti generati da riaperture accidentali del link)
+            best_report = max(reports, key=lambda r: r.get('totalParticipantCount', 0))
+            report_id = best_report.get('id')
             if not report_id:
                 logger.warning("ID report di presenza nullo")
                 return {
