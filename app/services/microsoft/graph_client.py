@@ -42,9 +42,29 @@ class GraphClient:
         self._msal_client = None
         self._access_token = None
         self._token_expiry = None  # Traccia scadenza token
+        self._user_id = None  # Cache per il GUID dell'utente
         
         logger.debug(f"GraphClient inizializzato | User: {user_email}")
     
+    def get_user_guid(self) -> str:
+        """
+        Recupera il GUID (Object ID) dell'utente organizzatore a partire dalla mail.
+        """
+        if self._user_id:
+            return self._user_id
+            
+        logger.info(f"Risoluzione GUID per l'utente {self.user_email}...")
+        try:
+            user_data = self.make_request("GET", f"/users/{self.user_email}")
+            self._user_id = user_data.get("id")
+            if not self._user_id:
+                raise GraphClientError(f"Il campo 'id' non è presente nella risposta per {self.user_email}")
+            logger.info(f"GUID risolto con successo: {self._user_id}")
+            return self._user_id
+        except Exception as e:
+            logger.error(f"Errore durante la risoluzione del GUID dell'utente {self.user_email}: {e}")
+            raise GraphClientError(f"Impossibile risolvere il GUID per l'utente {self.user_email}: {e}")
+            
     def _get_access_token(self) -> str:
         """
         Acquisisce access token via OAuth2 con gestione automatica scadenza.

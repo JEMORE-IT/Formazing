@@ -173,12 +173,12 @@ class MicrosoftService:
             
         import urllib.parse
         try:
-            user_email = self.graph_client.user_email
+            user_id = self.graph_client.get_user_guid()
             
             # 1. Trova l'onlineMeetingId usando il joinUrl
             filter_query = f"joinWebUrl eq '{join_url}'"
             encoded_filter = urllib.parse.quote(filter_query)
-            endpoint = f"/users/{user_email}/onlineMeetings?$filter={encoded_filter}"
+            endpoint = f"/users/{user_id}/onlineMeetings?$filter={encoded_filter}"
             
             logger.debug(f"Ricerca meeting online tramite Graph API | Endpoint: {endpoint}")
             meetings_response = self.graph_client.make_request(
@@ -205,7 +205,7 @@ class MicrosoftService:
                 }
                 
             # 2. Ottieni i report di presenza
-            reports_endpoint = f"/users/{user_email}/onlineMeetings/{meeting_id}/attendanceReports"
+            reports_endpoint = f"/users/{user_id}/onlineMeetings/{meeting_id}/attendanceReports"
             logger.debug(f"Recupero attendance reports | Endpoint: {reports_endpoint}")
             reports_response = self.graph_client.make_request(
                 method="GET",
@@ -232,7 +232,7 @@ class MicrosoftService:
                 }
                 
             # 3. Ottieni i dettagli del report espandendo attendanceRecords
-            report_detail_endpoint = f"/users/{user_email}/onlineMeetings/{meeting_id}/attendanceReports/{report_id}?$expand=attendanceRecords"
+            report_detail_endpoint = f"/users/{user_id}/onlineMeetings/{meeting_id}/attendanceReports/{report_id}?$expand=attendanceRecords"
             logger.debug(f"Download dettaglio report presenze | Endpoint: {report_detail_endpoint}")
             report_detail = self.graph_client.make_request(
                 method="GET",
