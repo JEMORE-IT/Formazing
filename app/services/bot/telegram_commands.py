@@ -57,6 +57,7 @@ class TelegramCommands:
         application.add_handler(CommandHandler("settimana", self.command_settimana))
         application.add_handler(CommandHandler("prossima_settimana", self.command_prossima_settimana))
         application.add_handler(CommandHandler("presenze", self.command_presenze))
+        application.add_handler(CommandHandler("test_diagnostica", self.command_test_diagnostica))
         application.add_handler(CommandHandler("help", self.command_help))
         application.add_handler(CommandHandler("start", self.command_help))  # Alias
         
@@ -480,3 +481,61 @@ class TelegramCommands:
             return days[dt.weekday()]
         except Exception:
             return 'N/A'
+
+    async def command_test_diagnostica(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Esegue manualmente la diagnostica di integrità dei sistemi."""
+        try:
+            logger.info("Esecuzione manuale diagnostica via Telegram...")
+            # Rispondi subito per evitare timeout
+            status_msg = await update.message.reply_html("🤖 <i>Controllo i miei ingranaggi... attendi un attimo...</i>")
+            
+            from app.services.training_service import TrainingService
+            ts = TrainingService.get_instance()
+            report = await ts.run_system_diagnostics()
+            
+            issues = []
+            
+            # 1. Notion checks
+            if not report['notion']['connection_ok']:
+                issues.append("🔴 <b>Notion API:</b> Connessione fallita.")
+            elif not report['notion']['valid_structure']:
+                missing = ", ".join(report['notion']['missing_fields'])
+                issues.append(f"🔴 <b>Notion Database:</b> Campi obbligatori mancanti: {missing}.")
+                
+            # 2. Microsoft checks
+            if not report['microsoft']['authenticated']:
+                issues.append("🔴 <b>Microsoft Graph:</b> Autenticazione app fallita.")
+            elif not report['microsoft']['user_resolved']:
+                issues.append("🔴 <b>Microsoft Graph:</b> Impossibile risolvere il GUID dell'organizzatore.")
+            
+            # Secret expiry check
+            secret_days = report['microsoft']['secret_days_remaining']
+            if secret_days != 9999:
+                if secret_days <= 0:
+                    issues.append("🔴 <b>Microsoft Secret:</b> Il Client Secret configurato è SCADUTO.")
+                elif secret_days <= 30:
+                    issues.append(f"🟡 <b>Microsoft Secret:</b> Il Client Secret scadrà tra {secret_days} giorni. Rinnovalo su Azure AD per evitare interruzioni.")
+                    
+            # 3. Telegram checks
+            if not report['telegram']['connected']:
+                issues.append("🔴 <b>Telegram Bot:</b> Connessione API fallita.")
+                
+            if issues:
+                alert_msg = (
+                    "⚠️ <b>Allerta Diagnostica Formazing</b>\n\n"
+                    "Sono state rilevate le seguenti anomalie di sistema:\n\n" +
+                    "\n".join(issues) +
+                    "\n\n🔗 <i>Accedi alla Dashboard <a href='http://localhost:5001/diagnostica'>Stato del Sistema</a> per maggiori dettagli.</i>"
+                )
+            else:
+                alert_msg = (
+                    "✅ <b>Diagnostica Formazing</b>\n\n"
+                    "Tutto a posto! Il sistema è pienamente operativo e Notion è correttamente sincronizzato. ✨\n\n"
+                    "Nessuna anomalia rilevata."
+                )
+                
+            await status_msg.edit_text(alert_msg, parse_mode='HTML', disable_web_page_preview=True)
+            
+        except Exception as e:
+            logger.error(f"Errore nel comando test_diagnostica: {e}", exc_info=True)
+            await update.message.reply_html(f"❌ Errore critico durante la diagnostica: {e}")
