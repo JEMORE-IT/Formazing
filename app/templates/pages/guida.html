@@ -25,7 +25,8 @@
                     <li><strong>Notion</strong> come database, in particolare il database "Formazioni"</li>
                     <li><strong>Teams</strong>, per creare i link/stanze con cui eseguire le formazioni e inviare
                         <strong>email</strong>, entrambe queste operazioni vengono effettuate con l'account JEMORE del
-                        resp formazioni.</li>
+                        resp formazioni.
+                    </li>
                     <li><strong>Bot Telegram</strong>, per notificare i gruppi.</li>
                 </ul>
                 <p class="text-blu-jemore mb-0 mt-3 small opacity-75">
@@ -211,7 +212,7 @@
                         <div class="card-jemore h-100 border-start border-blu-jemore border-4 p-3 shadow-none bg-light">
                             <h5 class="fw-bold text-blu-jemore">/presenze &lt;codice&gt;</h5>
                             <p class="small text-muted mb-0">Mostra le info di presenza alla formazione indicata, ossia
-                                numero partecipanti, lsita pa durata, .</p>
+                                numero partecipanti, lista di partecipanti e durata.</p>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -270,7 +271,8 @@
                             <h5 class="fw-bold text-blu-jemore">Aggiornamento Real-time</h5>
                             <p class="small text-muted mb-0">Proprio come nella Dashboard, puoi usare il tasto
                                 <strong>Aggiorna da Notion</strong> per ricaricare le statistiche con i dati freschi del
-                                database.</p>
+                                database.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -343,7 +345,8 @@
                         <h6 class="fw-bold mb-2"><i class="bi bi-fonts me-2"></i> 2. NOME</h6>
                         <p class="small mb-0">Il nome della formazione. Gli spazi vengono convertiti automaticamente in
                             <em>underscore</em> (es. <code>Sicurezza_informatica</code>). Per ottenere un codice più
-                            bello e leggibile è sconsigliato usare nomi esageratamente lunghi o con caratteri strani</p>
+                            bello e leggibile è sconsigliato usare nomi esageratamente lunghi o con caratteri strani
+                        </p>
                     </div>
 
                     <div class="col-12">
@@ -416,7 +419,7 @@
                         " %}
                         {% include 'atoms/tutorial_step.html' %}
 
-                        {% set title = '2. App: Invio Comunicazioni' %}
+                        {% set title = '2. Formazing: Invio Comunicazioni' %}
                         {% set content = "
                         <p class='text-blu-jemore'>
                             Apri Formazing, vai alla dashboard e clicca sul tasto <strong>Preview</strong> di una
@@ -479,26 +482,10 @@
                             esattamente cosa accade e di conseguenza cosa NON devi fare manualmente su Notion o altrove.
                             Formazing si occuperà di:
                         </p>
-                        <ul class='small list-unstyled text-blu-jemore'>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Cambiare lo stato su Notion da
-                                'Programmata' a 'Calendarizzata'.</li>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Generare il codice univoco per la
-                                formazione.</li>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Creare l'evento su Microsoft
-                                Teams.</li>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Inviare l'email con link Teams
-                                allegato.</li>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Inserire il link Teams su Notion.
-                            </li>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Inserire il codice formazione su
-                                Notion.</li>
-                            <li><i class='bi bi-check2-circle text-success me-2'></i> Inviare i messaggi Telegram ai
-                                gruppi, con tutte le informazioni relative alla formazione.</li>
-                        </ul>
                         " %}
                         {% include 'atoms/tutorial_step.html' %}
 
-                        {% set title = '3. App: Chiusura e Feedback' %}
+                        {% set title = '3. Formazing: Chiusura e Feedback' %}
                         {% set content = "
                         <p class='text-blu-jemore'>
                             Una volta conclusa la formazione, vai nella tab <i>'Calendarizzate'</i> e clicca su
@@ -529,26 +516,37 @@
                         " %}
                         {% include 'atoms/tutorial_step.html' %}
 
-                        {% set title = '4. App: Sincronizzazione Presenze (Sperimentale)' %}
+                        {% set title = '4. Formazing: Sincronizzazione Presenze' %}
                         {% set content = "
                         <p class='text-blu-jemore'>
                             Una volta che lo stato della formazione passa a <i>'Conclusa'</i>, nella Dashboard comparirà
                             il pulsante verde <strong>'Presenze'</strong> (o <strong>'Aggiorna'</strong>). Cliccandoci,
                             l'applicazione si collegherà automaticamente a Teams per scaricare il report.
+                            Più precisamente ecco quel che accade:
                         </p>
-                        <ul class='small text-blu-jemore'>
-                            <li><strong>Cosa fa Formazing:</strong> Scarica l'elenco di chi ha partecipato, lo confronta
-                                con gli utenti registrati su Notion, compila la colonna <i>'Partecipanti'</i>, scrive il
-                                totale in <i>'Numero Partecipanti'</i> e inserisce la <i>'Durata'</i> (arrotondata a
-                                blocchi di 0.5 ore, con un minimo di 0.5 ore).</li>
-                            <li><strong>Comando Telegram:</strong> Al termine della sincronizzazione, chiunque potrà
-                                interrogare il bot con il comando <code>/presenze &lt;codice_formazione&gt;</code> per
-                                vedere l'elenco dei presenti direttamente su Telegram.</li>
+                        <ul class='small list-unstyled text-blu-jemore'>
+                            <li><i class='bi bi-check2-circle text-success me-2'></i> Foramzing richiede il report della
+                                chiamata relativa al LINK della formazione corrente</li>
+                            <li><i class='bi bi-check2-circle text-success me-2'></i> Prende il report con il maggior
+                                numero di partecipanti, per scartare altri report, fatti perché magari la chiamata è
+                                stata avviata in
+                                più momenti diversi.</li>
+                            <li><i class='bi bi-check2-circle text-success me-2'></i> Estra la durata della formazione e
+                                il totale di partecipanti, caricandoli nelle rispettive colonne Notion.</li>
+                            <li><i class='bi bi-check2-circle text-success me-2'></i> Estrae da Notion la lista delle
+                                persone presenti nel Workspace.</li>
+                            <li><i class='bi bi-check2-circle text-success me-2'></i> Fa il mapping tra il nome/email
+                                presente nel report e il nome/email presente su Notion, ottenendo così il NOTION_ID di
+                                quella persona.</li>
+                            <li><i class='bi bi-check2-circle text-success me-2'></i> Inserisce il NOTION_ID del
+                                partecipante nella proprietà <i>'Partecipanti'</i>, così che sia facilmente
+                                visualizzabile</li>
+
                         </ul>
                         <p class='text-blu-jemore bg-warning bg-opacity-25 p-3 rounded border border-warning small'>
                             <i class='bi bi-exclamation-triangle-fill text-warning me-2'></i>
-                            <strong>ATTENZIONE:</strong> Questa funzionalità è da considerarsi **sperimentale** e ha
-                            molti punti di fallimento legati all'ecosistema Microsoft. La sincronizzazione potrebbe
+                            <strong>ATTENZIONE:</strong> Questa funzionalità è da considerarsi <i>Best Effort</i>,
+                            siccome ha molti punti di potenziale fallimento. La sincronizzazione potrebbe
                             fallire o essere incompleta se:
                             <br>• Il link di Teams inserito non è mai stato effettivamente avviato (nessuno è entrato
                             nella chiamata).
@@ -556,7 +554,9 @@
                             workspace di Notion (in tal caso verranno contati nel totale numerico ma non appariranno
                             come nomi).
                             <br>• Il meeting è scaduto: Microsoft Graph cancella i dati temporanei del meeting dopo
-                            circa 90 giorni dal suo svolgimento.
+                            90 giorni in teoria dal suo svolgimento.
+                            Da notare che tutti questi potenziali punti di fallimento dipendono da voi esseri umani che
+                            usate l'ecosistema Microsoft, non da me :-)
                         </p>
                         " %}
                         {% include 'atoms/tutorial_step.html' %}
