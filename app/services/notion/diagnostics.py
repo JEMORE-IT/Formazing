@@ -170,7 +170,10 @@ class NotionDiagnostics:
             'Stato': 'status',
             'Codice': 'rich_text',
             'Link Teams': 'url',
-            'Periodo': 'select'
+            'Periodo': 'select',
+            'Partecipanti': 'people',
+            'Numero Partecipanti': 'number',
+            'Durata': 'number'
         }
         
         try:
@@ -204,6 +207,7 @@ class NotionDiagnostics:
             # Determina validità generale
             result['valid'] = len(result['missing_fields']) == 0 and len(result['incorrect_types']) == 0
             
+
             if result['valid']:
                 logger.info("Struttura database valida")
             else:

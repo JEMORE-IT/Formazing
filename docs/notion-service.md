@@ -374,6 +374,9 @@ Status (status) → Stato (string)
 Codice (rich_text) → Codice (string)
 Link Teams (url) → Link Teams (string)
 Periodo (select) → Periodo (string)
+Partecipanti (people) → Partecipanti (string, comma-separated names and emails)
+Numero Partecipanti (number) → Numero Partecipanti (int)
+Durata (number) → Durata (float)
 ```
 
 **Validazione campi critici:** Se mancano Nome, Area, Data o Status → ritorna `None`
@@ -439,6 +442,8 @@ Periodo (select) → Periodo (string)
 - `extract_rich_text_property()` → Per Codice, Descrizioni
 - `extract_url_property()` → Per Link Teams  
 - `extract_select_property()` → Per Periodo
+- `extract_people_property()` → Per Partecipanti, concatena i nomi e le email in formato `Nome (email), ...`
+- `extract_number_property()` → Per Numero Partecipanti e Durata, estrae i valori numerici float/int
 
 ---
 
@@ -535,18 +540,31 @@ Modulo specializzato nelle **operazioni di scrittura** (Create, Update, Delete) 
 
 #### 📊 `update_multiple_fields(notion_id: str, updates: Dict) -> bool`
 **Scopo:** Aggiornamento multipli campi in operazione atomica  
-**Utilizzato da:** Operazioni complesse che richiedono aggiornamenti multi-campo
+**Utilizzato da:** Operazioni complesse che richiedono aggiornamenti multi-campo (es: sincronizzazione presenze, calendarizzazione)
 
 **Input esempio:**
 ```python
 updates = {
-    'status': 'Calendarizzata',
-    'codice': 'IT-Security-2024-01',
-    'link_teams': 'https://teams.microsoft.com/...'
+    'Stato': 'Calendarizzata',
+    'Codice': 'IT-Security-2024-01',
+    'Link Teams': 'https://teams.microsoft.com/...',
+    'Partecipanti': [{'name': 'Luca', 'email': 'luca@example.com'}],  # Oppure [{'id': 'user-uuid'}]
+    'Numero Partecipanti': 5,
+    'Durata': 1.5
 }
 ```
 
+**Funzionamento speciale per `Partecipanti`**:
+Se riceve una lista di dizionari con nome ed email, interroga il metodo `get_workspace_users_mapping()` per ricavare gli ID degli utenti corrispondenti nel workspace Notion, salvandoli come native `people` properties. Se un partecipante non fa parte del workspace Notion, viene registrato un warning e l'utente viene saltato.
+
 **Vantaggio:** Atomicità - tutti i campi aggiornati insieme o nessuno
+
+---
+
+#### 👥 `get_workspace_users_mapping() -> Tuple[Dict[str, str], Dict[str, str]]`
+**Scopo:** Recupera e mappa tutti gli utenti del workspace Notion per la risoluzione dei partecipanti  
+**Utilizzato da:** `update_multiple_fields()` quando si aggiorna il campo `Partecipanti`  
+**Output:** Restituisce due dizionari: `email_to_id` (in minuscolo) e `name_to_id` (in minuscolo, come fallback). Gestisce automaticamente la paginazione dell'API Notion.
 
 ---
 
@@ -627,24 +645,29 @@ Modulo specializzato in **diagnostica, monitoring e debugging** del sistema Noti
 ---
 
 #### ✅ `validate_database_structure() -> Dict`
-**Scopo:** Validazione struttura database per compatibilità *(NUOVA FUNZIONALITÀ)*  
+**Scopo:** Validazione struttura database per compatibilità  
 **Utilizzato da:**
 - `NotionService.validate_database_structure()` per setup validation
 - Script di setup automatico
 - Troubleshooting configurazione
 
-**Campi verificati:**
+**Campi obbligatori verificati:**
 ```python
 expected_fields = {
     'Nome': 'title',
     'Area': 'multi_select',
-    'Data': 'date', 
-    'Status': 'status',
+    'Date': 'date', 
+    'Stato': 'status',
     'Codice': 'rich_text',
     'Link Teams': 'url',
     'Periodo': 'select'
 }
 ```
+
+**Campi opzionali verificati (generano warnings non-bloccanti):**
+- `Partecipanti`: tipo `people`
+- `Numero Partecipanti`: tipo `number`
+- `Durata`: tipo `number`
 
 **Output esempio:**
 ```json
@@ -656,7 +679,12 @@ expected_fields = {
   },
   "missing_fields": [],
   "incorrect_types": [],
-  "warnings": []
+  "warnings": [
+    {
+      "field": "Partecipanti",
+      "message": "Il campo 'Partecipanti' (tipo people) non è presente nel database Notion..."
+    }
+  ]
 }
 ```
 

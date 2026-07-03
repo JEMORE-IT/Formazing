@@ -56,10 +56,12 @@ class TelegramCommands:
         application.add_handler(CommandHandler("domani", self.command_domani))
         application.add_handler(CommandHandler("settimana", self.command_settimana))
         application.add_handler(CommandHandler("prossima_settimana", self.command_prossima_settimana))
+        application.add_handler(CommandHandler("presenze", self.command_presenze))
+        application.add_handler(CommandHandler("test_diagnostica", self.command_test_diagnostica))
         application.add_handler(CommandHandler("help", self.command_help))
         application.add_handler(CommandHandler("start", self.command_help))  # Alias
         
-        logger.info("Command handlers registrati: /oggi, /domani, /settimana, /prossima_settimana, /help, /start")
+        logger.info("Command handlers registrati: /oggi, /domani, /settimana, /prossima_settimana, /presenze, /help, /start")
     
     # ===============================
     # COMANDI BOT PUBBLICI
@@ -91,13 +93,97 @@ class TelegramCommands:
         Comando /settimana - Mostra tutte le formazioni della settimana (Lun-Dom).
         """
         await self._handle_week_command(update, context, weeks_offset=0, period_name="settimana")
-
+ 
     async def command_prossima_settimana(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Comando /prossima_settimana - Mostra tutte le formazioni della prossima settimana (Lun-Dom).
         """
         await self._handle_week_command(update, context, weeks_offset=1, period_name="prossima settimana")
     
+    async def command_presenze(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        Comando /presenze <codice_formazione> - Mostra l'elenco dei partecipanti.
+        
+        FUNZIONALITÀ:
+        - Recupera il codice passato come argomento.
+        - Se non fornito, avvisa l'utente di specificare un codice.
+        - Cerca la formazione per codice.
+        - Se trovata, restituisce la lista dei partecipanti presenti nella colonna 'Partecipanti'.
+        """
+        if self.notion_service is None:
+            await update.message.reply_text("❌ Servizio non disponibile al momento")
+            return
+            
+        if not context.args:
+            await update.message.reply_text(
+                "❌ Specifica un codice formazione.\n"
+                "Uso: <code>/presenze &lt;codice_formazione&gt;</code>\n"
+                "Esempio: <code>/presenze IT-2024-001</code>",
+                parse_mode='HTML'
+            )
+            return
+            
+        target_code = context.args[0].strip()
+        
+        try:
+            # Recupera tutte le formazioni in stato Conclusa
+            formazioni = await self.notion_service.get_formazioni_by_status('Conclusa')
+            
+            target_formazione = None
+            for f in formazioni:
+                code = f.get('Codice', '').strip()
+                if code.lower() == target_code.lower():
+                    target_formazione = f
+                    break
+            
+            if not target_formazione:
+                await update.message.reply_text(
+                    f"❌ Nessuna formazione trovata con il codice: <code>{target_code}</code>",
+                    parse_mode='HTML'
+                )
+                return
+                
+            nome = target_formazione.get('Nome', 'N/A')
+            durata = target_formazione.get('Durata')
+            num_part = target_formazione.get('Numero Partecipanti')
+            partecipanti_str = target_formazione.get('Partecipanti', '').strip()
+            
+            message = f"<b>PRESENZE FORMAZIONE</b>\n"
+            message += f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            message += f"<b>Corso:</b> {nome}\n"
+            
+            if durata is not None:
+                message += f"<b>Durata:</b> {durata} ore\n"
+            
+            partecipanti_list = []
+            if partecipanti_str:
+                partecipanti_list = [p.strip() for p in partecipanti_str.split(',') if p.strip()]
+                
+            if num_part is not None:
+                message += f"<b>Partecipanti:</b> {int(num_part)} totali ({len(partecipanti_list)} registrati su Notion)\n"
+            else:
+                message += f"<b>Partecipanti registrati:</b> {len(partecipanti_list)}\n"
+                
+            message += f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            
+            if not partecipanti_list:
+                message += "<i>Nessun partecipante registrato.</i>"
+            else:
+                message += f"<b>ELENCO PARTECIPANTI:</b>\n"
+                for i, p in enumerate(partecipanti_list, 1):
+                    # Mostra solo il nome pulito senza l'email
+                    p_name = p.split(' (')[0]
+                    message += f"  {i}. {p_name}\n"
+                
+                if num_part is not None and int(num_part) > len(partecipanti_list):
+                    message += f"\n<i>Nota: La differenza tra partecipanti totali e registrati è dovuta a utenti esterni o non iscritti a Notion.</i>"
+            
+            await update.message.reply_text(message, parse_mode='HTML')
+            
+        except Exception as e:
+            logger.error(f"Errore nel comando /presenze: {e}", exc_info=True)
+            await update.message.reply_text("❌ Si è verificato un errore nel recupero delle presenze")
+
     async def command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Comando /help e /start - Mostra guida comandi disponibili.
@@ -113,9 +199,10 @@ class TelegramCommands:
 📅 <b>/domani</b> - Mostra le formazioni di domani  
 📅 <b>/settimana</b> - Mostra tutte le formazioni della settimana
 📅 <b>/prossima_settimana</b> - Mostra le formazioni della prossima settimana
+👥 <b>/presenze &lt;codice&gt;</b> - Mostra la lista dei partecipanti per una formazione
 ❓ <b>/help</b> - Mostra questo messaggio
 
-💡 <i>Tutti i comandi mostrano solo le formazioni già calendarizzate con link Teams attivi!</i>
+💡 <i>I comandi del calendario mostrano solo le formazioni già calendarizzate con link Teams attivi!</i>
 
 🔗 <b>Informazioni per ogni formazione:</b>
 • Area di competenza
@@ -394,3 +481,61 @@ class TelegramCommands:
             return days[dt.weekday()]
         except Exception:
             return 'N/A'
+
+    async def command_test_diagnostica(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Esegue manualmente la diagnostica di integrità dei sistemi."""
+        try:
+            logger.info("Esecuzione manuale diagnostica via Telegram...")
+            # Rispondi subito per evitare timeout
+            status_msg = await update.message.reply_html("🤖 <i>Controllo i miei ingranaggi... attendi un attimo...</i>")
+            
+            from app.services.training_service import TrainingService
+            ts = TrainingService.get_instance()
+            report = await ts.run_system_diagnostics()
+            
+            issues = []
+            
+            # 1. Notion checks
+            if not report['notion']['connection_ok']:
+                issues.append("🔴 <b>Notion API:</b> Connessione fallita.")
+            elif not report['notion']['valid_structure']:
+                missing = ", ".join(report['notion']['missing_fields'])
+                issues.append(f"🔴 <b>Notion Database:</b> Campi obbligatori mancanti: {missing}.")
+                
+            # 2. Microsoft checks
+            if not report['microsoft']['authenticated']:
+                issues.append("🔴 <b>Microsoft Graph:</b> Autenticazione app fallita.")
+            elif not report['microsoft']['user_resolved']:
+                issues.append("🔴 <b>Microsoft Graph:</b> Impossibile risolvere il GUID dell'organizzatore.")
+            
+            # Secret expiry check
+            secret_days = report['microsoft']['secret_days_remaining']
+            if secret_days != 9999:
+                if secret_days <= 0:
+                    issues.append("🔴 <b>Microsoft Secret:</b> Il Client Secret configurato è SCADUTO.")
+                elif secret_days <= 30:
+                    issues.append(f"🟡 <b>Microsoft Secret:</b> Il Client Secret scadrà tra {secret_days} giorni. Rinnovalo su Azure AD per evitare interruzioni.")
+                    
+            # 3. Telegram checks
+            if not report['telegram']['connected']:
+                issues.append("🔴 <b>Telegram Bot:</b> Connessione API fallita.")
+                
+            if issues:
+                alert_msg = (
+                    "⚠️ <b>Allerta Diagnostica Formazing</b>\n\n"
+                    "Sono state rilevate le seguenti anomalie di sistema:\n\n" +
+                    "\n".join(issues) +
+                    "\n\n🔗 <i>Accedi alla Dashboard <a href='http://localhost:5001/diagnostica'>Stato del Sistema</a> per maggiori dettagli.</i>"
+                )
+            else:
+                alert_msg = (
+                    "✅ <b>Diagnostica Formazing</b>\n\n"
+                    "Tutto a posto! Il sistema è pienamente operativo e Notion è correttamente sincronizzato. ✨\n\n"
+                    "Nessuna anomalia rilevata."
+                )
+                
+            await status_msg.edit_text(alert_msg, parse_mode='HTML', disable_web_page_preview=True)
+            
+        except Exception as e:
+            logger.error(f"Errore nel comando test_diagnostica: {e}", exc_info=True)
+            await update.message.reply_html(f"❌ Errore critico durante la diagnostica: {e}")

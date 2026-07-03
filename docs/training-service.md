@@ -771,6 +771,41 @@ async def dashboard():
 
 ---
 
+#### **`sync_attendance_from_teams(training_id: str) -> Dict`** (async)
+
+**Scopo:** Sincronizzazione manuale dei partecipanti, del conteggio e della durata di una formazione conclusa da Microsoft Teams a Notion  
+**Utilizzato da:** Route `/sync-attendance/<id>`
+
+**Steps:**
+1. Recupera la formazione da Notion tramite `training_id`.
+2. Controlla che la formazione esista e che abbia un `Link Teams` valido.
+3. Interroga `microsoft_service.get_meeting_attendance(join_url)` per estrarre la lista di presenti, il conteggio totale e la durata calcolata del meeting Teams.
+4. Se il report Teams è vuoto, azzera i campi in Notion e ritorna esito vuoto.
+5. Invia a Notion l'aggiornamento atomico per i campi `Partecipanti`, `Numero Partecipanti` e `Durata` (l'integrazione di Notion si occuperà di mappare le email/nomi degli invitati sui profili del workspace).
+
+**Parameters:**
+- `training_id` (str): ID formazione da Notion
+
+**Returns:**
+```python
+{
+    'status': 'success',
+    'count': 3,
+    'participants': [
+        {'name': 'Luca', 'email': 'luca@example.com'},
+        {'name': 'Jane', 'email': 'jane@example.com'}
+    ],
+    'message': 'Sincronizzazione completata: 3 partecipanti trovati (Durata: 1.5h).'
+}
+```
+
+**Raises:**
+- `TrainingServiceError`: Se la formazione non ha un Link Teams o se il salvataggio in Notion fallisce.
+- `MicrosoftServiceError`: Se il recupero del report da Graph API fallisce.
+- `NotionServiceError`: Se si verificano errori nelle API di Notion.
+
+---
+
 ### **🔒 Metodi Privati (Core Implementation)**
 
 #### **`_normalize_area(area: str) -> str`**

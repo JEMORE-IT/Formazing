@@ -577,3 +577,158 @@ class TrainingService:
 
         feedback_link = proteus.get('APP.LINKS.FEEDBACK_FORM')
         return feedback_link
+
+    async def sync_attendance_from_teams(self, training_id: str) -> dict:
+        """
+        Recupera il report presenze da Teams e lo salva in Notion per una formazione conclusa.
+        
+        Args:
+            training_id: ID della formazione in Notion
+            
+        Returns:
+            Dict con i risultati del sync
+        """
+        try:
+            logger.info(f"Avvio sincronizzazione presenze Teams | Training ID: {training_id}")
+            
+            # 1. Recupera dati formazione
+            training = await self.notion_service.get_formazione_by_id(training_id)
+            if not training:
+                raise TrainingServiceError(f"Formazione {training_id} non trovata")
+                
+            join_url = training.get('Link Teams')
+            if not join_url:
+                raise TrainingServiceError("Impossibile sincronizzare: Link Teams non presente per questa formazione")
+                
+            # 2. Recupera presenze da Microsoft Graph
+            attendance_data = await self.microsoft_service.get_meeting_attendance(join_url)
+            
+            # get_meeting_attendance restituisce un dizionario
+            participants = attendance_data.get('participants', [])
+            duration = attendance_data.get('duration', 0.0)
+            total_participants = attendance_data.get('total_participants', 0)
+            
+            if not participants:
+                logger.warning(f"Nessun partecipante trovato nel report Teams per {training.get('Nome')}")
+                # Aggiorniamo comunque Notion passando campi vuoti/azzerati
+                await self.notion_service.update_formazione(training_id, {
+                    'Partecipanti': [],
+                    'Numero Partecipanti': 0,
+                    'Durata': 0.0
+                })
+                return {
+                    'status': 'success',
+                    'count': 0,
+                    'message': 'Nessun partecipante rilevato nel report di Teams. I campi di presenza sono stati azzerati.'
+                }
+                
+            # 3. Salva i partecipanti, numero partecipanti e durata in Notion
+            updates = {
+                'Partecipanti': participants,
+                'Numero Partecipanti': total_participants,
+                'Durata': duration
+            }
+            success = await self.notion_service.update_formazione(training_id, updates)
+            
+            if not success:
+                raise TrainingServiceError("Errore durante il salvataggio dei partecipanti su Notion")
+                
+            logger.info(f"Sincronizzazione presenze completata | Rilevati {len(participants)} partecipanti | Durata: {duration}h")
+            return {
+                'status': 'success',
+                'count': len(participants),
+                'participants': participants,
+                'message': f"Sincronizzazione completata: {len(participants)} partecipanti trovati (Durata: {duration}h)."
+            }
+            
+        except NotionServiceError as e:
+            logger.error(f"Errore Notion nel sync presenze {training_id}: {e}")
+            raise TrainingServiceError(f"Errore aggiornamento Notion: {e}")
+        except MicrosoftServiceError as e:
+            logger.error(f"Errore Microsoft Graph nel sync presenze {training_id}: {e}")
+            raise TrainingServiceError(f"Errore Microsoft Graph: {e}")
+        except Exception as e:
+            logger.error(f"Errore imprevisto nel sync presenze {training_id}: {e}", exc_info=True)
+            raise TrainingServiceError(f"Errore sincronizzazione: {e}")
+
+    async def run_system_diagnostics(self) -> Dict:
+        """
+        Esegue la diagnostica completa di tutti i servizi del sistema.
+        Questo metodo viene condiviso sia dalla rotta web di diagnostica 
+        sia dal monitoraggio periodico automatico del bot Telegram.
+        
+        Returns:
+            Dict con i risultati diagnostici di Notion, Microsoft Graph e Telegram.
+        """
+        # 1. Notion Diagnostics
+        try:
+            notion_conn = await self.notion_service.diagnostics.test_connection()
+            notion_struct = await self.notion_service.diagnostics.validate_database_structure()
+        except Exception as e:
+            logger.error(f"Errore diagnostica Notion: {e}")
+            notion_conn = {'connection_ok': False, 'error': str(e)}
+            notion_struct = {'valid': False, 'missing_fields': [], 'incorrect_types': [], 'warnings': []}
+            
+        # 2. Microsoft Graph Diagnostics
+        try:
+            microsoft_info = self.microsoft_service.get_diagnostics_info()
+        except Exception as e:
+            logger.error(f"Errore diagnostica Microsoft: {e}")
+            microsoft_info = {'authenticated': False, 'error': str(e)}
+            
+        # Calcolo scadenza secret da ENV
+        secret_expiry_str = proteus.get('MICROSOFT.SECRET_EXPIRY')
+        secret_days_remaining = 9999
+        secret_expiry_formatted = "N/A"
+        if secret_expiry_str:
+            try:
+                from datetime import datetime
+                expiry_date = datetime.strptime(secret_expiry_str.strip(), '%Y-%m-%d')
+                now = datetime.now()
+                delta = expiry_date - now
+                secret_days_remaining = max(0, delta.days)
+                secret_expiry_formatted = expiry_date.strftime('%Y-%m-%d')
+            except Exception as parse_err:
+                logger.error(f"Errore parsing MICROSOFT.SECRET_EXPIRY '{secret_expiry_str}': {parse_err}")
+                secret_expiry_formatted = f"Errore parsing ({secret_expiry_str})"
+                secret_days_remaining = -1
+                
+        # 3. Telegram Diagnostics
+        try:
+            telegram_info = self.telegram_service.check_connection()
+        except Exception as e:
+            logger.error(f"Errore diagnostica Telegram: {e}")
+            telegram_info = {'configured': False, 'connected': False, 'error': str(e)}
+            
+        return {
+            'notion': {
+                'connection_ok': notion_conn.get('connection_ok', False),
+                'database_accessible': notion_conn.get('database_accessible', False),
+                'response_time_ms': notion_conn.get('response_time_ms'),
+                'database_title': notion_conn.get('database_info', {}).get('title', 'N/A'),
+                'properties_count': notion_conn.get('database_info', {}).get('properties_count', 0),
+                'valid_structure': notion_struct.get('valid', False),
+                'missing_fields': notion_struct.get('missing_fields', []),
+                'incorrect_types': notion_struct.get('incorrect_types', []),
+                'warnings': notion_struct.get('warnings', []),
+                'error': notion_conn.get('error')
+            },
+            'microsoft': {
+                'authenticated': microsoft_info.get('authenticated', False),
+                'user_resolved': microsoft_info.get('user_resolved', False),
+                'user_guid': microsoft_info.get('user_guid'),
+                'token_info': microsoft_info.get('token_info'),
+                'secret_expiry': secret_expiry_formatted,
+                'secret_days_remaining': secret_days_remaining,
+                'error': microsoft_info.get('error'),
+                'configured_email': self.microsoft_service.graph_client.user_email
+            },
+            'telegram': {
+                'configured': telegram_info.get('configured', False),
+                'connected': telegram_info.get('connected', False),
+                'bot_info': telegram_info.get('bot_info'),
+                'groups_count': len(self.telegram_service.groups),
+                'error': telegram_info.get('error')
+            }
+        }
+

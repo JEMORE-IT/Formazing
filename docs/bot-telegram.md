@@ -245,6 +245,18 @@ def _get_day_name(self, date_obj: date) -> str
                Raggruppamento per _get_day_name()
                     ↓
                📤 "📆 Formazioni della settimana:\n\n**Lunedì**\n🎯 Python..."
+
+#### Comando `/presenze` - Flusso Completo
+```
+👤 /presenze <codice> → command_presenze()
+                             ↓
+                        notion_service.get_formazioni_by_status('Conclusa')
+                             ↓
+                        Ricerca per codice o ID Notion
+                             ↓
+                        Estrae e formatta la stringa dei partecipanti
+                             ↓
+                        📤 "👥 PRESENZE PER LA FORMAZIONE:\n🏷 Codice: IT-2024-001\n📍 Elenco Partecipanti (2):\n1. Luca Di Leo (lucadileo@jemore.it)\n2. Jane Doe (jane.doe@example.com)"
 ```
 
 ---
@@ -459,7 +471,7 @@ async def start_bot(self) -> None
 1. `_initialize_bot()` → setup bot e registrazione handlers
 2. `application.run_polling()` → avvio polling Telegram  
 **Modalità:** Asincrona, non bloccante  
-**Handler registrati:** `/start`, `/help`, `/oggi`, `/domani`, `/settimana`
+**Handler registrati:** `/start`, `/help`, `/oggi`, `/domani`, `/settimana`, `/prossima_settimana`, `/presenze`, `/presenza`
 
 ```python
 async def stop_bot(self) -> None
@@ -627,6 +639,8 @@ def _validate_feedback_data(self, training_data: dict) -> bool
 | `/oggi` | 📅 Formazioni oggi | Elenco formazioni della giornata corrente |
 | `/domani` | ⏭️ Formazioni domani | Elenco formazioni del giorno successivo |
 | `/settimana` | 📆 Formazioni settimana | Elenco formazioni della settimana corrente |
+| `/prossima_settimana` | 📆 Prossima settimana | Elenco formazioni della prossima settimana |
+| `/presenze <codice>` | 👥 Lista partecipanti | Elenco dei partecipanti registrati in Notion per la formazione |
 
 ### Registrazione Handler nel Sistema
 
@@ -634,11 +648,14 @@ Il sistema utilizza il pattern **Command Handler** di python-telegram-bot per ma
 
 ```python
 # In telegram_service._initialize_bot()
-application.add_handler(CommandHandler("oggi", self.commands.handle_oggi))
-application.add_handler(CommandHandler("domani", self.commands.handle_domani))
-application.add_handler(CommandHandler("settimana", self.commands.handle_settimana))
-application.add_handler(CommandHandler("help", self.commands.handle_help))
-application.add_handler(CommandHandler("start", self.commands.handle_help))
+application.add_handler(CommandHandler("oggi", self.commands.command_oggi))
+application.add_handler(CommandHandler("domani", self.commands.command_domani))
+application.add_handler(CommandHandler("settimana", self.commands.command_settimana))
+application.add_handler(CommandHandler("prossima_settimana", self.commands.command_prossima_settimana))
+application.add_handler(CommandHandler("presenze", self.commands.command_presenze))
+application.add_handler(CommandHandler("presenza", self.commands.command_presenze))  # Alias
+application.add_handler(CommandHandler("help", self.commands.command_help))
+application.add_handler(CommandHandler("start", self.commands.command_help))
 ```
 
 Quando un utente invia `/oggi`, Telegram API invia un update al bot, che viene automaticamente instradato a `self.commands.handle_oggi()`.

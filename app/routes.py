@@ -183,6 +183,25 @@ def guida():
                          faqs=faqs)
 
 
+@main.route('/diagnostica')
+@admin_required
+async def diagnostica():
+    """Pagina di stato e diagnostica in tempo reale del sistema."""
+    try:
+        training_service = TrainingService.get_instance()
+        diagnostics_data = await training_service.run_system_diagnostics()
+        
+        return render_template('pages/diagnostica.html',
+                             title='Stato del Sistema - Formazing',
+                             data=diagnostics_data)
+                             
+    except Exception as e:
+        logger.error(f"Errore caricamento pagina diagnostica: {e}", exc_info=True)
+        flash(f"Impossibile caricare la diagnostica: {e}", 'error')
+        return redirect(url_for('main.dashboard'))
+
+
+
 @main.route('/analytics')
 @login_required
 async def analytics():
@@ -404,4 +423,30 @@ async def confirm_feedback(training_id):
     except Exception as e:
         logger.error(f"Errore imprevisto conferma feedback: {e}", exc_info=True)
         flash(f'Errore imprevisto: {e}', 'error')
+        return redirect(url_for('main.dashboard'))
+
+
+@main.route('/sync-attendance/<training_id>', methods=['GET', 'POST'])
+@admin_required
+async def sync_attendance(training_id):
+    """Sincronizza manualmente i partecipanti da Teams per una formazione conclusa."""
+    try:
+        logger.info(f"Richiesta sincronizzazione partecipanti | ID: {training_id}")
+        
+        training_service = TrainingService.get_instance()
+        result = await training_service.sync_attendance_from_teams(training_id)
+        
+        # Invalida la cache dei dati dashboard
+        cache.delete('dashboard_data_notion')
+        
+        flash(result['message'], 'success')
+        return redirect(url_for('main.dashboard'))
+        
+    except TrainingServiceError as e:
+        logger.error(f"Errore sincronizzazione partecipanti | ID: {training_id} | Error: {e}")
+        flash(f"Errore sincronizzazione: {e}", 'error')
+        return redirect(url_for('main.dashboard'))
+    except Exception as e:
+        logger.error(f"Errore imprevisto sincronizzazione partecipanti | ID: {training_id} | Error: {e}", exc_info=True)
+        flash(f"Errore imprevisto durante la sincronizzazione: {e}", 'error')
         return redirect(url_for('main.dashboard'))
