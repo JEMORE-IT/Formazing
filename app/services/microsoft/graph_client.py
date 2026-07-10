@@ -42,9 +42,29 @@ class GraphClient:
         self._msal_client = None
         self._access_token = None
         self._token_expiry = None  # Traccia scadenza token
+        self._user_id = None  # Cache per il GUID dell'utente
         
         logger.debug(f"GraphClient inizializzato | User: {user_email}")
     
+    def get_user_guid(self) -> str:
+        """
+        Recupera il GUID (Object ID) dell'utente organizzatore a partire dalla mail.
+        """
+        if self._user_id:
+            return self._user_id
+            
+        logger.info(f"Risoluzione GUID per l'utente {self.user_email}...")
+        try:
+            user_data = self.make_request("GET", f"/users/{self.user_email}")
+            self._user_id = user_data.get("id")
+            if not self._user_id:
+                raise GraphClientError(f"Il campo 'id' non è presente nella risposta per {self.user_email}")
+            logger.info(f"GUID risolto con successo: {self._user_id}")
+            return self._user_id
+        except Exception as e:
+            logger.error(f"Errore durante la risoluzione del GUID dell'utente {self.user_email}: {e}")
+            raise GraphClientError(f"Impossibile risolvere il GUID per l'utente {self.user_email}: {e}")
+            
     def _get_access_token(self) -> str:
         """
         Acquisisce access token via OAuth2 con gestione automatica scadenza.
@@ -140,3 +160,58 @@ class GraphClient:
         except Exception as e:
             logger.error(f"Request error | Error: {e}")
             raise GraphClientError(f"Request failed: {str(e)}")
+
+    def get_token_status(self) -> dict:
+        """
+        Restituisce lo stato del token di autenticazione Microsoft Graph.
+        """
+        if not self._access_token or not self._token_expiry:
+            return {
+                'active': False,
+                'expiry': None,
+                'seconds_remaining': 0
+            }
+        
+        from datetime import datetime
+        now = datetime.now()
+        remaining = int((self._token_expiry - now).total_seconds())
+        return {
+            'active': remaining > 0,
+            'expiry': self._token_expiry.strftime('%Y-%m-%d %H:%M:%S'),
+            'seconds_remaining': max(0, remaining)
+        }
+
+    def check_connection(self) -> dict:
+        """
+        Esegue un health check della connessione Microsoft Graph API.
+        """
+        result = {
+            'authenticated': False,
+            'user_resolved': False,
+            'user_guid': None,
+            'token_info': None,
+            'error': None
+        }
+        
+        try:
+            # 1. Verifica acquisizione token
+            self._get_access_token()
+            result['authenticated'] = True
+            result['token_info'] = self.get_token_status()
+            
+            # 2. Verifica risoluzione dell'utente configurato
+            if self.user_email:
+                try:
+                    guid = self.get_user_guid()
+                    result['user_resolved'] = True
+                    result['user_guid'] = guid
+                except Exception as user_err:
+                    result['error'] = f"Errore risoluzione utente: {user_err}"
+            else:
+                result['error'] = "Email utente (MICROSOFT_USER_EMAIL) non configurata"
+                
+        except Exception as e:
+            result['error'] = str(e)
+            
+        return result
+

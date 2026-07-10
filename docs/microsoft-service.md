@@ -870,6 +870,34 @@ formazione_data = {
 ```
 ---
 
+#### 👥 `async get_meeting_attendance(join_url: str) -> Dict`
+**Scopo:** Recupera i partecipanti, la durata e il conteggio presenze da un report di riunione Teams  
+**Utilizzato da:**
+- `training_service.sync_attendance_from_teams()` per la sincronizzazione presenze
+
+**Flusso delle operazioni:**
+1. Cerca il meeting Teams tramite il link `joinWebUrl`:
+   `GET /users/{userId}/onlineMeetings?$filter=joinWebUrl eq '{joinUrl}'`
+2. Recupera l'elenco dei report di presenza per quel meeting ID:
+   `GET /users/{userId}/onlineMeetings/{meetingId}/attendanceReports`
+3. Scarica i dettagli dell'ultimo report espandendo i singoli record dei partecipanti:
+   `GET /users/{userId}/onlineMeetings/{meetingId}/attendanceReports/{reportId}?$expand=attendanceRecords`
+4. Calcola la durata della call sottraendo la data di inizio da quella di fine (`meetingEndDateTime` - `meetingStartDateTime`) ed esprimendo il risultato in ore decimali float (es: `1.5` per 1 ora e 30 minuti).
+
+**Output:**
+```python
+{
+    'participants': [
+        {'name': 'Luca Di Leo', 'email': 'lucadileo@jemore.it'},
+        {'name': 'Jane Doe', 'email': 'jane.doe@example.com'}
+    ],
+    'duration': 1.25,          # 1 ora e 15 minuti
+    'total_participants': 2    # Conteggio totale partecipanti
+}
+```
+
+---
+
 #### ✅ `_validate_formazione_data(formazione_data: Dict) -> None`
 **Scopo:** Validazione fail-fast input  
 **Utilizzato da:** `create_training_event()` prima dell'elaborazione

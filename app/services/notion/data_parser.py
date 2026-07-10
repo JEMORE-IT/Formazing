@@ -104,6 +104,9 @@ class NotionDataParser:
             codice = self.extract_rich_text_property(properties.get('Codice')) or ''
             link_teams = self.extract_url_property(properties.get('Link Teams')) or ''
             periodo = self.extract_select_property(properties.get('Periodo')) or ''
+            partecipanti = self.extract_people_property(properties.get('Partecipanti')) or ''
+            numero_partecipanti = self.extract_number_property(properties.get('Numero Partecipanti'))
+            durata = self.extract_number_property(properties.get('Durata'))
             
             # Costruzione formazione normalizzata - FORMATO PRONTO ALL'USO
             formazione = {
@@ -115,6 +118,9 @@ class NotionDataParser:
                 'Codice': codice,
                 'Link Teams': link_teams,
                 'Periodo': periodo,
+                'Partecipanti': partecipanti,
+                'Numero Partecipanti': numero_partecipanti,
+                'Durata': durata,
                 '_notion_id': notion_id         # Mantieni per backward compatibility
             }
             
@@ -218,6 +224,17 @@ class NotionDataParser:
         if not url_prop:
             return ''
         return url_prop.get('url', '') or ''
+
+    def extract_number_property(self, number_prop: Dict) -> Optional[float]:
+        """
+        Estrae valore numerico da property Number di Notion.
+        
+        Struttura Notion:
+        {"number": 15.5}
+        """
+        if not number_prop:
+            return None
+        return number_prop.get('number')
     
     def extract_date_property(self, date_prop: Dict) -> str:
         """
@@ -264,3 +281,28 @@ class NotionDataParser:
         except Exception as e:
             logger.warning(f"Errore parsing data | Input: '{start_date}' | Error: {e}")
             return start_date  # Fallback a stringa originale
+
+    def extract_people_property(self, people_prop: Dict) -> str:
+        """
+        Estrae i nomi e le email delle persone da una property People di Notion.
+        
+        Struttura Notion:
+        {"people": [{"object": "user", "name": "Luca", "person": {"email": "luca@example.com"}}]}
+        
+        Output: "Luca (luca@example.com), Jane (jane@example.com)"
+        """
+        if not people_prop or not people_prop.get('people'):
+            return ''
+        
+        people_list = []
+        for p in people_prop['people']:
+            name = p.get('name', '')
+            email = p.get('person', {}).get('email', '')
+            if name and email:
+                people_list.append(f"{name} ({email})")
+            elif name:
+                people_list.append(name)
+            elif email:
+                people_list.append(email)
+                
+        return ', '.join(people_list)
