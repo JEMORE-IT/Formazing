@@ -19,6 +19,11 @@
                 <a href="/guida" class="nav-link-jemore">
                     <i class="bi bi-mortarboard me-1"></i> Guida
                 </a>
+                {% if is_admin %}
+                <a href="{{ url_for('main.diagnostica') }}" class="nav-link-jemore">
+                    <i class="bi bi-cpu me-1"></i> Stato Sistema
+                </a>
+                {% endif %}
             </div>
 
             {% if current_user %}
