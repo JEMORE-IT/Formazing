@@ -119,7 +119,7 @@ async def dashboard():
         cache_key = 'dashboard_data_notion'
         
         if force_refresh:
-            logger.info("Richiesto ricaricamento forzato dei dati da Notion")
+            logger.debug("Richiesto ricaricamento forzato dei dati da Notion")
             cache.delete(cache_key)
             return redirect(url_for('main.dashboard'))
         
@@ -127,9 +127,9 @@ async def dashboard():
         dashboard_data = cache.get(cache_key)
         
         if dashboard_data:
-            logger.info("Dati dashboard recuperati dalla cache")
+            logger.debug("Dati dashboard recuperati dalla cache")
         else:
-            logger.info("Dati non in cache. Caricamento da Notion...")
+            logger.debug("Dati non in cache. Caricamento da Notion...")
             training_service = TrainingService.get_instance()
             # CHIAMATA OTTIMIZZATA: Singola richiesta globale
             dashboard_data = await training_service.notion_service.get_dashboard_data()
@@ -214,13 +214,13 @@ async def analytics():
             cache.delete(cache_key)
             return redirect(url_for('main.analytics'))
 
-        logger.info("Accesso alla pagina Analytics")
+        logger.debug("Accesso alla pagina Analytics")
         
         # Prova a recuperare i DATI dalla cache
         dashboard_data = cache.get(cache_key)
         
         if not dashboard_data:
-            logger.info("Dati non in cache. Caricamento da Notion per analytics...")
+            logger.debug("Dati non in cache. Caricamento da Notion per analytics...")
             training_service = TrainingService.get_instance()
             dashboard_data = await training_service.notion_service.get_dashboard_data()
             cache.set(cache_key, dashboard_data, timeout=600)
