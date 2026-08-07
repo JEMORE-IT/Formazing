@@ -5,19 +5,19 @@ Questa directory contiene i file di log dell'applicazione Formazing.
 ## 📄 File generati
 
 - `formazing.log` - File di log principale (rotante)
-- `formazing.log.1`, `formazing.log.2`, ecc. - File di backup (max 5)
+- `formazing.log.1`, `formazing.log.2`, ecc. - File di backup (max 10)
 
 ## 🔄 Rotazione automatica
 
 I file di log utilizzano `RotatingFileHandler`:
 - **Dimensione massima**: 10 MB per file
-- **File di backup**: 5 file mantenuti
+- **File di backup**: 10 file mantenuti (≈ 2-4 mesi di storico)
 - **Encoding**: UTF-8
 
 Quando `formazing.log` raggiunge 10 MB:
 1. Viene rinominato in `formazing.log.1`
 2. I backup precedenti vengono spostati (`log.1` → `log.2`, ecc.)
-3. Il backup più vecchio (`log.5`) viene eliminato
+3. Il backup più vecchio (`log.10`) viene eliminato
 4. Un nuovo `formazing.log` viene creato
 
 ## ⚙️ Configurazione
@@ -28,8 +28,20 @@ Le impostazioni del logging possono essere modificate tramite variabili ambiente
 LOG_LEVEL=INFO                    # DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOG_FILE=logs/formazing.log       # Path del file di log
 LOG_MAX_BYTES=10485760           # 10 MB in bytes
-LOG_BACKUP_COUNT=5               # Numero di backup da mantenere
+LOG_BACKUP_COUNT=10              # Numero di backup da mantenere (default: 10 = ~110MB max)
 ```
+
+## 🔇 Verbosità Controllata
+
+Per evitare che il file cresca inutilmente, alcune categorie di log vengono filtrate:
+
+- **`werkzeug`** → `WARNING`: le richieste HTTP con esito positivo (200/304) non vengono
+  scritte nel file. Solo errori (4xx, 5xx) sono registrati.
+- **Log di routine Notion** → `DEBUG`: le query intermedie ("Recupero formazioni...",
+  "Parsing completato...") sono state abbassate a DEBUG e non appaiono in produzione
+  (dove `LOG_LEVEL=INFO`). Rimangono visibili attivando `LOG_LEVEL=DEBUG` per il debug.
+- **`telegram`** → `CRITICAL`: la libreria python-telegram-bot è estremamente verbosa;
+  vengono registrati solo i crash critici.
 
 ## 📊 Formato log
 
