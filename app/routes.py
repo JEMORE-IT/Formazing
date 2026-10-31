@@ -15,10 +15,12 @@ from app.services.auth_sso import AuthService, login_required, admin_required
 from app.services.notion import NotionServiceError
 from app.services.training_service import TrainingService, TrainingServiceError
 from app.services.analytics_service import AnalyticsService
+from app.services.log_service import LogService
 from config import proteus
 import logging
 import yaml
 import os
+from datetime import datetime, date
 
 # Logger per routes (configurazione centralizzata già attiva)
 logger = logging.getLogger(__name__)
@@ -119,7 +121,7 @@ async def dashboard():
         cache_key = 'dashboard_data_notion'
         
         if force_refresh:
-            logger.info("Richiesto ricaricamento forzato dei dati da Notion")
+            logger.debug("Richiesto ricaricamento forzato dei dati da Notion")
             cache.delete(cache_key)
             return redirect(url_for('main.dashboard'))
         
@@ -127,9 +129,9 @@ async def dashboard():
         dashboard_data = cache.get(cache_key)
         
         if dashboard_data:
-            logger.info("Dati dashboard recuperati dalla cache")
+            logger.debug("Dati dashboard recuperati dalla cache")
         else:
-            logger.info("Dati non in cache. Caricamento da Notion...")
+            logger.debug("Dati non in cache. Caricamento da Notion...")
             training_service = TrainingService.get_instance()
             # CHIAMATA OTTIMIZZATA: Singola richiesta globale
             dashboard_data = await training_service.notion_service.get_dashboard_data()
@@ -214,13 +216,13 @@ async def analytics():
             cache.delete(cache_key)
             return redirect(url_for('main.analytics'))
 
-        logger.info("Accesso alla pagina Analytics")
+        logger.debug("Accesso alla pagina Analytics")
         
         # Prova a recuperare i DATI dalla cache
         dashboard_data = cache.get(cache_key)
         
         if not dashboard_data:
-            logger.info("Dati non in cache. Caricamento da Notion per analytics...")
+            logger.debug("Dati non in cache. Caricamento da Notion per analytics...")
             training_service = TrainingService.get_instance()
             dashboard_data = await training_service.notion_service.get_dashboard_data()
             cache.set(cache_key, dashboard_data, timeout=600)
@@ -450,3 +452,73 @@ async def sync_attendance(training_id):
         logger.error(f"Errore imprevisto sincronizzazione partecipanti | ID: {training_id} | Error: {e}", exc_info=True)
         flash(f"Errore imprevisto durante la sincronizzazione: {e}", 'error')
         return redirect(url_for('main.dashboard'))
+
+
+# --- API ENDPOINT: LOG VIEWER ---
+
+@main.route('/api/logs')
+@admin_required
+def api_logs():
+    """
+    Endpoint JSON che restituisce le righe di log nell'intervallo temporale
+    specificato dai parametri query 'start' e 'end'.
+
+    Query params:
+        start (str, optional): Datetime ISO inizio intervallo (es. '2026-08-01T00:00').
+                               Default: inizio del giorno corrente.
+        end   (str, optional): Datetime ISO fine intervallo (es. '2026-08-07T23:59').
+                               Default: fine del giorno corrente.
+
+    Returns:
+        JSON: { "logs": [...], "count": N, "start": "...", "end": "..." }
+              oppure { "error": "..." } in caso di parametri non validi.
+    """
+    # --- Parsing dei parametri di input ---
+    today = date.today()
+    default_start = datetime(today.year, today.month, today.day, 0, 0, 0)
+    default_end   = datetime(today.year, today.month, today.day, 23, 59, 59)
+
+    start_str = request.args.get('start', '').strip()
+    end_str   = request.args.get('end', '').strip()
+
+    # Formati accettati dai datetime-local HTML: 'YYYY-MM-DDTHH:MM' o 'YYYY-MM-DD HH:MM'
+    datetime_formats = ['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S']
+
+    start_dt = default_start
+    if start_str:
+        for fmt in datetime_formats:
+            try:
+                start_dt = datetime.strptime(start_str, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            logger.warning(f"Parametro 'start' non valido: '{start_str}'")
+            return jsonify({'error': f"Formato 'start' non valido: '{start_str}'. Usa YYYY-MM-DDTHH:MM"}), 400
+
+    end_dt = default_end
+    if end_str:
+        for fmt in datetime_formats:
+            try:
+                end_dt = datetime.strptime(end_str, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            logger.warning(f"Parametro 'end' non valido: '{end_str}'")
+            return jsonify({'error': f"Formato 'end' non valido: '{end_str}'. Usa YYYY-MM-DDTHH:MM"}), 400
+
+    if start_dt > end_dt:
+        return jsonify({'error': "'start' non può essere successivo a 'end'"}), 400
+
+    # --- Lettura dei log tramite LogService ---
+    log_service = LogService()
+    log_lines = log_service.get_logs(start_dt=start_dt, end_dt=end_dt)
+
+    return jsonify({
+        'logs':  log_lines,
+        'count': len(log_lines),
+        'start': start_dt.strftime('%Y-%m-%d %H:%M:%S'),
+        'end':   end_dt.strftime('%Y-%m-%d %H:%M:%S'),
+    })
+

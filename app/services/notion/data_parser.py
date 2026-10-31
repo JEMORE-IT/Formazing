@@ -51,7 +51,7 @@ class NotionDataParser:
             if formazione:  # Filtra righe malformate
                 formazioni.append(formazione)
         
-        logger.info(f"Parsing completato | Formazioni valide: {len(formazioni)}/{len(notion_response.get('results', []))}")
+        logger.debug(f"Parsing completato | Formazioni valide: {len(formazioni)}/{len(notion_response.get('results', []))}")
         return formazioni
     
     def parse_single_formazione(self, page: Dict) -> Optional[Dict]:

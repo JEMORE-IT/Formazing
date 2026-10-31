@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.flask
+    env_file:
+      - .env
+    restart: always
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    container_name: telegram_bot
+    depends_on:
+      - web
+    env_file:
+      - .env
+    restart: always

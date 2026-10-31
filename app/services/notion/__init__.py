@@ -95,7 +95,7 @@ class NotionService:
             # 3. Parsa risultati con DataParser
             formazioni = self.data_parser.parse_formazioni_list(response)
             
-            logger.info(f"Formazioni recuperate | Status: '{status}' | Count: {len(formazioni)}")
+            logger.debug(f"Formazioni recuperate | Status: '{status}' | Count: {len(formazioni)}")
             return formazioni
             
         except Exception as e:
@@ -132,7 +132,7 @@ class NotionService:
             # 3. Parsa risultati con DataParser
             formazioni = self.data_parser.parse_formazioni_list(response)
             
-            logger.info(f"Formazioni recuperate | Status: '{status}' | Range: {start_date}-{end_date} | Count: {len(formazioni)}")
+            logger.debug(f"Formazioni recuperate | Status: '{status}' | Range: {start_date}-{end_date} | Count: {len(formazioni)}")
             return formazioni
             
         except Exception as e:

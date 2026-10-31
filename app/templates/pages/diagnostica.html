@@ -364,6 +364,82 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================================
+     LOG DI SISTEMA
+     Card terminale con filtro temporale e rendering dei log
+     ============================================================ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-jemore border-0 shadow-sm bg-white p-4">
+
+            <!-- Header card -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4 flex-wrap gap-2">
+                <h4 class="h5 fw-bold text-blu-jemore mb-0">
+                    <i class="bi bi-terminal me-2 text-blu-jemore"></i> Log di Sistema
+                </h4>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span id="log-count-badge" class="badge bg-secondary rounded-pill px-3 py-1 extra-small fw-bold">
+                        — eventi
+                    </span>
+                    <button id="btn-download-logs" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" title="Scarica i log correnti come file .txt">
+                        <i class="bi bi-download"></i> <span class="d-none d-sm-inline">Scarica .txt</span>
+                    </button>
+                    <button id="btn-refresh-logs" class="btn btn-sm btn-jemore-dark-blu d-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline">Aggiorna</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtri: preset rapidi + intervallo personalizzato -->
+            <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+
+                <!-- Preset rapidi -->
+                <div class="d-flex flex-wrap gap-1" id="log-presets">
+                    <button class="btn btn-sm btn-outline-secondary log-preset-btn" data-preset="hour">Ultima ora</button>
+                    <button class="btn btn-sm btn-jemore-dark-blu log-preset-btn" data-preset="today">Oggi</button>
+                    <button class="btn btn-sm btn-outline-secondary log-preset-btn" data-preset="yesterday">Ieri</button>
+                    <button class="btn btn-sm btn-outline-secondary log-preset-btn" data-preset="7d">7 giorni</button>
+                    <button class="btn btn-sm btn-outline-secondary log-preset-btn" data-preset="30d">30 giorni</button>
+                </div>
+
+                <!-- Divisore verticale -->
+                <div class="vr d-none d-md-block" style="height: 32px;"></div>
+
+                <!-- Intervallo personalizzato -->
+                <div class="d-flex flex-wrap align-items-end gap-2">
+                    <div>
+                        <label for="log-start" class="form-label extra-small text-muted mb-1">Da</label>
+                        <input type="datetime-local" id="log-start" class="form-control form-control-sm"
+                               style="font-size: 0.8rem; min-width: 185px;">
+                    </div>
+                    <div>
+                        <label for="log-end" class="form-label extra-small text-muted mb-1">A</label>
+                        <input type="datetime-local" id="log-end" class="form-control form-control-sm"
+                               style="font-size: 0.8rem; min-width: 185px;">
+                    </div>
+                    <button id="btn-apply-range" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-funnel me-1"></i>Applica
+                    </button>
+                </div>
+            </div>
+
+            <!-- Box terminale -->
+            <div id="log-terminal"
+                 style="background: #0f1117; border-radius: 8px; padding: 16px;
+                        max-height: 520px; overflow-y: auto; font-family: 'Consolas', 'Menlo', monospace;
+                        font-size: 0.75rem; line-height: 1.6; border: 1px solid #2a2d3a;">
+                <div id="log-output" style="white-space: pre-wrap; word-break: break-word; color: #c9d1d9;">
+                    <span style="color: #6e7681; font-style: italic;">Caricamento log in corso…</span>
+                </div>
+            </div>
+
+            <!-- Messaggio di stato (errori, nessun risultato) -->
+            <div id="log-status-msg" class="mt-2 small text-muted d-none"></div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -375,6 +451,207 @@
         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
             new bootstrap.Tooltip(el, { trigger: 'hover' });
         });
+
+        // ================================================================
+        // LOG VIEWER — Logica JavaScript
+        // ================================================================
+
+        // Riferimenti DOM
+        const logOutput    = document.getElementById('log-output');
+        const logCountBadge = document.getElementById('log-count-badge');
+        const logStatusMsg = document.getElementById('log-status-msg');
+        const inputStart   = document.getElementById('log-start');
+        const inputEnd     = document.getElementById('log-end');
+        const terminal     = document.getElementById('log-terminal');
+
+        // Buffer corrente per il download
+        let currentLogLines = [];
+
+        // ---- Utilità datetime ----
+
+        /** Formatta un Date in stringa 'YYYY-MM-DDTHH:MM' per i datetime-local input. */
+        function toInputValue(dt) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        }
+
+        /** Imposta i valori degli input e applica la classe active al preset cliccato. */
+        function applyPreset(presetName) {
+            const now = new Date();
+            let start, end;
+
+            switch (presetName) {
+                case 'hour':
+                    start = new Date(now.getTime() - 60 * 60 * 1000);
+                    end   = now;
+                    break;
+                case 'today':
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0);
+                    end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+                    break;
+                case 'yesterday':
+                    const yest = new Date(now); yest.setDate(now.getDate() - 1);
+                    start = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 0, 0);
+                    end   = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 23, 59);
+                    break;
+                case '7d':
+                    start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    end   = now;
+                    break;
+                case '30d':
+                    start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    end   = now;
+                    break;
+                default:
+                    return;
+            }
+
+            inputStart.value = toInputValue(start);
+            inputEnd.value   = toInputValue(end);
+
+            // Aggiorna classe active sui pulsanti preset
+            document.querySelectorAll('.log-preset-btn').forEach(btn => {
+                btn.classList.toggle('btn-jemore-dark-blu', btn.dataset.preset === presetName);
+                btn.classList.toggle('btn-outline-secondary', btn.dataset.preset !== presetName);
+            });
+
+            fetchLogs();
+        }
+
+        // ---- Colorazione sintattica ----
+
+        const LEVEL_COLORS = {
+            'CRITICAL': '#ff4444',
+            'ERROR':    '#ef5350',
+            'WARNING':  '#ffb74d',
+            'INFO':     '#64b5f6',
+            'DEBUG':    '#81c784',
+        };
+
+        /**
+         * Colora una singola riga di log in base al livello.
+         * Usa replace per aggiungere <span> colorati evitando innerHTML injection
+         * su contenuto arbitrario (il testo grezzo è già XSS-safe essendo escapato).
+         */
+        function colorizeLines(lines) {
+            return lines.map(line => {
+                // Individua il livello nella riga (formato: "... | LEVEL | ...")
+                for (const [level, color] of Object.entries(LEVEL_COLORS)) {
+                    if (line.includes(`| ${level}`) || line.includes(`| ${level} `)) {
+                        // Escape HTML per sicurezza
+                        const safe = escapeHtml(line);
+                        return `<span style="color:${color}">${safe}</span>`;
+                    }
+                }
+                // Righe senza livello (traceback, continuazioni): grigio chiaro
+                return `<span style="color:#8b949e">${escapeHtml(line)}</span>`;
+            }).join('\n');
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ---- Fetch e rendering ----
+
+        function setLoading() {
+            logOutput.innerHTML = '<span style="color:#6e7681; font-style:italic;">Caricamento in corso…</span>';
+            logCountBadge.textContent = '— eventi';
+            logCountBadge.className = 'badge bg-secondary rounded-pill px-3 py-1 extra-small fw-bold';
+            logStatusMsg.classList.add('d-none');
+        }
+
+        async function fetchLogs() {
+            setLoading();
+
+            const params = new URLSearchParams();
+            if (inputStart.value) params.set('start', inputStart.value);
+            if (inputEnd.value)   params.set('end',   inputEnd.value);
+
+            try {
+                const resp = await fetch(`/api/logs?${params.toString()}`);
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    showError(data.error || `Errore HTTP ${resp.status}`);
+                    return;
+                }
+
+                currentLogLines = data.logs || [];
+
+                if (currentLogLines.length === 0) {
+                    logOutput.innerHTML = '<span style="color:#6e7681; font-style:italic;">Nessun evento trovato nell\'intervallo selezionato.</span>';
+                    logCountBadge.textContent = '0 eventi';
+                    logCountBadge.className = 'badge bg-secondary rounded-pill px-3 py-1 extra-small fw-bold';
+                } else {
+                    logOutput.innerHTML = colorizeLines(currentLogLines);
+                    logCountBadge.textContent = `${currentLogLines.length} eventi`;
+                    // Colore badge in base alla presenza di errori
+                    const hasErrors    = currentLogLines.some(l => l.includes('| ERROR') || l.includes('| CRITICAL'));
+                    const hasWarnings  = currentLogLines.some(l => l.includes('| WARNING'));
+                    logCountBadge.className = 'badge rounded-pill px-3 py-1 extra-small fw-bold ' + (
+                        hasErrors ? 'bg-danger' : hasWarnings ? 'bg-warning text-dark' : 'bg-success'
+                    );
+                    // Scroll all'ultimo evento (il più recente)
+                    terminal.scrollTop = terminal.scrollHeight;
+                }
+
+                logStatusMsg.classList.add('d-none');
+
+            } catch (err) {
+                showError(`Errore di rete: ${err.message}`);
+            }
+        }
+
+        function showError(msg) {
+            logOutput.innerHTML = `<span style="color:#ef5350; font-style:italic;">⚠ ${escapeHtml(msg)}</span>`;
+            logCountBadge.textContent = 'Errore';
+            logCountBadge.className = 'badge bg-danger rounded-pill px-3 py-1 extra-small fw-bold';
+            logStatusMsg.textContent = msg;
+            logStatusMsg.classList.remove('d-none');
+        }
+
+        // ---- Download ----
+
+        document.getElementById('btn-download-logs').addEventListener('click', () => {
+            if (currentLogLines.length === 0) return;
+            const text = currentLogLines.join('\n');
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            const rangeLabel = inputStart.value
+                ? inputStart.value.replace('T', '_').replace(/:/g, '-')
+                : 'oggi';
+            a.href     = url;
+            a.download = `formazing_logs_${rangeLabel}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // ---- Event listeners ----
+
+        document.querySelectorAll('.log-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+        });
+
+        document.getElementById('btn-refresh-logs').addEventListener('click', fetchLogs);
+        document.getElementById('btn-apply-range').addEventListener('click', () => {
+            // Deseleziona tutti i preset quando si usa l'intervallo personalizzato
+            document.querySelectorAll('.log-preset-btn').forEach(btn => {
+                btn.classList.remove('btn-jemore-dark-blu');
+                btn.classList.add('btn-outline-secondary');
+            });
+            fetchLogs();
+        });
+
+        // ---- Caricamento iniziale: preset "Oggi" ----
+        applyPreset('today');
     });
 </script>
-{% endblock %}
+{% endblock %}

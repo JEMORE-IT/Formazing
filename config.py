@@ -86,7 +86,10 @@ def setup_logging():
             '': {'handlers': ['console', 'file'], 'level': log_level, 'propagate': False},
             'app': {'handlers': ['console', 'file'], 'level': log_level, 'propagate': False},
             'telegram': {'handlers': ['console', 'file'], 'level': 'CRITICAL', 'propagate': False},
-            'httpx': {'handlers': ['console', 'file'], 'level': 'WARNING', 'propagate': False}
+            'httpx':    {'handlers': ['console', 'file'], 'level': 'WARNING',  'propagate': False},
+            # Werkzeug logga ogni singola richiesta HTTP (GET 200/304 per CSS, JS, ecc.).
+            # Impostandolo a WARNING eliminiamo quel rumore, conservando solo errori reali (4xx, 5xx).
+            'werkzeug': {'handlers': ['console', 'file'], 'level': 'WARNING',  'propagate': False},
         }
     }
     
