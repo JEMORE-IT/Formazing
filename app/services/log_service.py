@@ -38,20 +38,37 @@ class LogService:
       riceve TUTTI i log che rientrano nell'intervallo richiesto.
     """
 
-    def __init__(self, log_dir: str = 'logs', log_basename: str = 'formazing.log'):
+    def __init__(self):
         """
-        Inizializza il LogService.
+        Inizializza il LogService leggendo il path del file di log da Proteus,
+        lo stesso sorgente usato da setup_logging() in config.py per scrivere i log.
 
-        Args:
-            log_dir: Directory contenente i file di log (relativa alla root del progetto).
-            log_basename: Nome base del file di log principale.
+        In questo modo LogService punta sempre alla directory corretta indipendentemente
+        dall'ambiente (sviluppo, produzione, working directory diversa, path assoluto nel .env).
         """
-        # Calcola il path assoluto della directory dei log a partire da questo file
-        self._log_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-            log_dir
+        # Legge il path del log file dalla stessa configurazione usata da setup_logging().
+        # Esempio valori possibili: 'logs/formazing.log', '/var/log/formazing/formazing.log'
+        try:
+            from config import proteus
+            configured_log_file = proteus.get('LOG.FILE', 'logs/formazing.log')
+        except Exception:
+            # Fallback nel caso Proteus non sia disponibile (es. test isolati)
+            configured_log_file = 'logs/formazing.log'
+
+        # Se il path è relativo, lo rendiamo assoluto rispetto alla root del progetto
+        # (3 livelli su da app/services/log_service.py → app/services → app → root)
+        if not os.path.isabs(configured_log_file):
+            project_root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
+            configured_log_file = os.path.join(project_root, configured_log_file)
+
+        self._log_dir      = os.path.dirname(configured_log_file)
+        self._log_basename = os.path.basename(configured_log_file)
+
+        logger.debug(
+            f"LogService inizializzato | dir: '{self._log_dir}' | file: '{self._log_basename}'"
         )
-        self._log_basename = log_basename
 
     # ------------------------------------------------------------------
     # Public API
